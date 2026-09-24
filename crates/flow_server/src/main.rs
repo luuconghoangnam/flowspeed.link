@@ -3,7 +3,7 @@ mod routes;
 use axum::routing::{get, post};
 use axum::Router;
 use flow_core::queue::manager::QueueManager;
-use routes::{handle_add_downloads, handle_get_queues, handle_headless_download, AppState};
+use routes::{handle_add_downloads, handle_get_queues, handle_headless_download, handle_health_check, AppState};
 use single_instance::SingleInstance;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -25,6 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let app = Router::new()
+        .route("/", get(handle_health_check))
         .route("/add", post(handle_add_downloads))
         .route("/queues", get(handle_get_queues))
         .route("/start-headless-download", post(handle_headless_download))

@@ -8,9 +8,42 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 #[derive(Debug, Deserialize)]
-pub struct AddDownloadRequest {
+#[serde(untagged)]
+pub enum AddDownloadPayload {
+    /// Định dạng từ Chrome Extension v1.0.1: { items: [...], options: {...} }
+    ExtensionFormat {
+        items: Vec<ExtensionDownloadItem>,
+        options: Option<ExtensionOptions>,
+    },
+    /// Định dạng Array tiêu chuẩn từ REST-API.yml: [ { link, ... } ]
+    ArrayFormat(Vec<DownloadSourceItem>),
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExtensionDownloadItem {
+    #[serde(rename = "type")]
+    pub item_type: Option<String>,
     pub link: String,
     pub headers: Option<HashMap<String, String>>,
+    #[serde(rename = "downloadPage")]
+    pub download_page: Option<String>,
+    #[serde(rename = "suggestedName")]
+    pub suggested_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExtensionOptions {
+    #[serde(rename = "silentAdd")]
+    pub silent_add: Option<bool>,
+    #[serde(rename = "silentStart")]
+    pub silent_start: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DownloadSourceItem {
+    pub link: String,
+    pub headers: Option<HashMap<String, String>>,
+    #[serde(rename = "downloadPage")]
     pub download_page: Option<String>,
 }
 
@@ -23,7 +56,7 @@ pub struct QueueItemDto {
 #[derive(Debug, Deserialize)]
 pub struct HeadlessDownloadRequest {
     #[serde(rename = "downloadSource")]
-    pub download_source: AddDownloadRequest,
+    pub download_source: DownloadSourceItem,
     pub folder: Option<String>,
     pub name: Option<String>,
     #[serde(rename = "queueId")]
@@ -34,12 +67,28 @@ pub struct AppState {
     pub queue_manager: Arc<QueueManager>,
 }
 
-/// Handler cho POST /add
+/// Handler cho GET / (Health Check từ Extension)
+pub async fn handle_health_check() -> impl IntoResponse {
+    (StatusCode::OK, "Flow Speed Link Server Running")
+}
+
+/// Handler cho POST /add (Hỗ trợ cả 2 chuẩn payload từ Extension & API)
 pub async fn handle_add_downloads(
     State(_state): State<Arc<AppState>>,
-    Json(payload): Json<Vec<AddDownloadRequest>>,
+    Json(payload): Json<AddDownloadPayload>,
 ) -> impl IntoResponse {
-    tracing::info!("Received {} links to add", payload.len());
+    match payload {
+        AddDownloadPayload::ExtensionFormat { items, options } => {
+            tracing::info!(
+                "Received {} items from Chrome Extension (silentAdd: {:?})",
+                items.len(),
+                options.as_ref().and_then(|o| o.silent_add)
+            );
+        }
+        AddDownloadPayload::ArrayFormat(items) => {
+            tracing::info!("Received {} items from REST API array format", items.len());
+        }
+    }
     (StatusCode::OK, "OK")
 }
 

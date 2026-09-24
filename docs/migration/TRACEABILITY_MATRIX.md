@@ -1,6 +1,6 @@
 # 📋 Ma Trận Ánh Xạ & Truy Vết 1:1 (Traceability Matrix)
 
-> **Mục đích:** Đảm bảo 100% tính năng, logic, xử lý lỗi và edge-cases của codebase Kotlin (`legacy/kotlin-compose`) được chuyển dịch chính xác sang Rust (`dev`) mà không bị thất lạc.
+> **Mục đích:** Đảm bảo 100% tính năng, logic, xử lý lỗi và edge-cases của codebase Kotlin (`legacy/kotlin-compose`) được chuyển dịch chính xác sang Rust (`dev`) mà không bị thất lạc, đồng thời bảo vệ các thành phần tập trung (Extension, Landing Page).
 
 ---
 
@@ -31,9 +31,10 @@
 
 | API / Endpoint (`REST-API.yml`) | Handler Rust (Axum) | Payload & Contract | Tương thích Extension | Trạng thái |
 | :--- | :--- | :--- | :--- | :---: |
-| `POST /add` | `routes::add_download` | Request: `[ { link, headers, downloadPage } ]`<br>Response: `200 OK` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
-| `GET /queues` | `routes::list_queues` | Response: `[ { id: 1, name: "Default" } ]` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
-| `POST /start-headless-download` | `routes::headless_download` | Request: `{ downloadSource, folder, name, queueId }` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
+| `GET /` | `routes::handle_health_check` | Health check endpoint kiểm tra app đang chạy | ✅ 100% `background.js` | ⏳ Pending |
+| `POST /add` | `routes::handle_add_downloads` | Request: `{ items: [...], options: {...} }` hoặc `[ { link, ... } ]` | ✅ 100% `background.js` | ⏳ Pending |
+| `GET /queues` | `routes::handle_get_queues` | Response: `[ { id: 1, name: "Default" } ]` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
+| `POST /start-headless-download` | `routes::handle_headless_download`| Request: `{ downloadSource, folder, name, queueId }` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
 | `SingleInstanceServer.kt` | `flow_server::single_instance` | - Mutex Lock chống mở 2 app.<br>- Chuyển tiếp URL sang instance chính qua local socket. | N/A | ⏳ Pending |
 
 ---
@@ -49,3 +50,29 @@
 | `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm file tải về với mã hash mong muốn. | ⏳ Pending |
 | `SettingsScreen.kt` | `src/views/SettingsView.svelte` | Cài đặt folder mặc định, dark/light theme, proxy, autostart, port integration. | ⏳ Pending |
 | `SystemTray.kt` | Tauri System Tray API | Menu tray: Mở app, Pause All, Resume All, Thoát. | ⏳ Pending |
+
+---
+
+## 5. Browser Extension (`extension/` — Được Bảo Vệ & Quản Lý Tập Trung)
+
+> 🛡️ **QUY TẮC BẢO VỆ:** Thư mục `extension/` là mã nguồn chính thức cho Chrome Web Store / Firefox Addons, **KHÔNG ĐƯỢC XÓA** khi dọn dẹp mã nguồn.
+
+| File trong `extension/` | Vai trò trong hệ thống | Kết nối với Desktop | Trạng thái |
+| :--- | :--- | :--- | :---: |
+| `manifest.json` | Manifest V3 cấu hình quyền `downloads`, `storage`, `notifications` | `host_permissions: ["http://localhost/*"]` | ✅ Hoàn chỉnh |
+| `background.js` | Service worker bắt link tải qua `onDeterminingFilename` | Gọi API `http://localhost:15151/add` và `GET /` | ✅ Hoàn chỉnh |
+| `content.js` & `overlay.css` | Bắt link click trên trang web và hiển thị overlay icon tải | Gửi message `DOWNLOAD_LINK` cho `background.js` | ✅ Hoàn chỉnh |
+| `popup.html` & `popup.js` | Popup bật/tắt tính năng bắt link & kiểm tra trạng thái kết nối App | Hiển thị trạng thái kết nối cổng 15151 | ✅ Hoàn chỉnh |
+
+---
+
+## 6. Landing Page & Website (`landing/` — Được Bảo Vệ & Quản Lý Tập Trung)
+
+> 🛡️ **QUY TẮC BẢO VỆ:** Thư mục `landing/` là website chính thức của sản phẩm (`flowspeed.link`), **KHÔNG ĐƯỢC XÓA** khi dọn dẹp mã nguồn.
+
+| File trong `landing/` | Vai trò trong hệ thống | Nền tảng triển khai | Trạng thái |
+| :--- | :--- | :--- | :---: |
+| `index.html` | Trang chủ giới thiệu tính năng, link tải app và hướng dẫn cài đặt extension | Cloudflare Pages / Static CDN | ✅ Hoàn chỉnh |
+| `privacy.html` | Chính sách bảo mật bắt buộc cho Chrome Web Store submission | Cloudflare Pages / Static CDN | ✅ Hoàn chỉnh |
+| `wrangler.jsonc` | Cấu hình tự động deploy lên Cloudflare Pages/Workers | Cloudflare Workers CLI (`wrangler`) | ✅ Hoàn chỉnh |
+| `css/` & `js/` & `assets/` | Stylesheet, animations, hình ảnh minh họa sản phẩm | Assets tĩnh | ✅ Hoàn chỉnh |
