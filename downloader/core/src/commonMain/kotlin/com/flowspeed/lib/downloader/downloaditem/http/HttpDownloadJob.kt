@@ -178,7 +178,7 @@ class HttpDownloadJob(
                 saveState()
                 onDownloadResumed()
             } catch (e: Exception) {
-                e.printStackIfNOtUsual()
+                e.printStackIfNotUsual()
                 val shouldStop = when {
                     ExceptionUtils.isNormalCancellation(e) -> true
                     e is DownloadValidationException -> e.isCritical()

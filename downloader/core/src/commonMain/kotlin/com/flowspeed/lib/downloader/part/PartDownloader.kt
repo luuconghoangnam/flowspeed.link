@@ -1,13 +1,13 @@
 package com.flowspeed.lib.downloader.part
 
-import com.flowspeed.lib.downloader.anntation.HeavyCall
+import com.flowspeed.lib.downloader.annotation.HeavyCall
 import com.flowspeed.lib.downloader.connection.Connection
 import com.flowspeed.lib.downloader.connection.IResponseInfo
 import com.flowspeed.lib.downloader.destination.DestWriter
 import com.flowspeed.lib.downloader.exception.DownloadValidationException
 import com.flowspeed.lib.downloader.exception.PartTooManyErrorException
 import com.flowspeed.lib.downloader.utils.ExceptionUtils
-import com.flowspeed.lib.downloader.utils.printStackIfNOtUsual
+import com.flowspeed.lib.downloader.utils.printStackIfNotUsual
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -78,10 +78,8 @@ abstract class PartDownloader<
                 while (coroutineContext.isActive || !stop) {
                     if (tries > 0) {
                         delay(RetryDelay)
-//                        println("#${part.from}retrying $tries")
                     }
                     if (haveToManyErrors()) {
-//                        println("tell them we have error!")
                         iCantRetryAnymore(
                             PartTooManyErrorException(
                                 part,
@@ -91,7 +89,8 @@ abstract class PartDownloader<
                         )
                     }
                     if (part.isCompleted) {
-                        println("WARNING $part is completed")
+                        onFinish()
+                        break
                     }
                     try {
                         download()
@@ -235,13 +234,7 @@ abstract class PartDownloader<
         lastException = e
         val canceled = PartDownloadStatus.Canceled(e)
         onNewStatus(canceled)
-        e.printStackIfNOtUsual()
-//        if (!canceled.isNormalCancellation()) {
-//            e.printStackTrace()
-//        } else {
-//            println("part cancelled because of ${e.localizedMessage ?: e::class.simpleName}")
-//            e.printStackTrace()
-//        }
+        e.printStackIfNotUsual()
     }
 
     protected open fun onFinish() {
@@ -254,7 +247,6 @@ abstract class PartDownloader<
 
     @HeavyCall
     private fun copyDataSync(source: Source, destWriter: DestWriter) {
-//        println("copying range to file --- ${part.current}-${part.to}")
         val buffer = Buffer()
         var totalReadCount = 0L
         var firstLoop = true

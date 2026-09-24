@@ -10,6 +10,7 @@ import com.flowspeed.lib.downloader.downloaditem.DownloadJobExtraConfig
 import com.flowspeed.lib.downloader.downloaditem.DownloadJobStatus
 import com.flowspeed.lib.downloader.downloaditem.DownloadStatus
 import com.flowspeed.lib.downloader.downloaditem.IDownloadItem
+import com.flowspeed.lib.downloader.downloaditem.http.HttpRetryPolicy
 import com.flowspeed.lib.downloader.exception.DownloadValidationException
 import com.flowspeed.lib.downloader.exception.TooManyErrorException
 import com.flowspeed.lib.downloader.part.*
@@ -154,7 +155,7 @@ class HLSDownloadJob(
                 saveState()
                 onDownloadResumed()
             } catch (e: Exception) {
-                e.printStackIfNOtUsual()
+                e.printStackIfNotUsual()
                 val shouldStop = when {
                     ExceptionUtils.isNormalCancellation(e) -> true
                     e is DownloadValidationException -> e.isCritical()
@@ -382,22 +383,26 @@ class HLSDownloadJob(
             // we always have one try (the initial resume action), after that others are retries!
             val retriedCount = (failedDownloadTries - 1).coerceAtLeast(0)
             if (retriedCount < getMaxAllowedRetries()) {
-                retry(isInFirstResume)
+                val retryDelay = HttpRetryPolicy.calculateBackoffDelay(
+                    retriedCount = retriedCount,
+                    baseDelayMs = delayForEachRetry
+                )
+                retry(isInFirstResume, retryDelay)
             } else {
                 pause(TooManyErrorException(e))
             }
         }
     }
 
-    fun retry(isInFirstResume: Boolean) {
+    fun retry(isInFirstResume: Boolean, retryDelay: Long = delayForEachRetry) {
         scope.launch {
             val newScopeResult = retryLock.tryLocked {
                 val job = async {
                     saveState()
                     cancelDownloadScope()
                     stopAllParts()
-                    _status.update { DownloadJobStatus.Retrying(delayForEachRetry) }
-                    delay(delayForEachRetry)
+                    _status.update { DownloadJobStatus.Retrying(retryDelay) }
+                    delay(retryDelay)
                     createAndInitializeDownloadScope()
                 }
                 retryJob = job

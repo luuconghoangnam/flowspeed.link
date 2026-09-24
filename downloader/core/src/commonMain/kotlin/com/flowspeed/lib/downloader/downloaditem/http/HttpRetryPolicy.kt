@@ -49,11 +49,19 @@ class HttpRetryPolicy(
         retriedCount: Int,
         baseDelayMs: Long = 1000L,
         maxDelayMs: Long = 30000L
-    ): Long {
-        if (retriedCount <= 0) return baseDelayMs
-        val shift = retriedCount.coerceAtMost(5)
-        val delay = baseDelayMs * (1L shl shift)
-        return delay.coerceAtMost(maxDelayMs)
+    ): Long = Companion.calculateBackoffDelay(retriedCount, baseDelayMs, maxDelayMs)
+
+    companion object {
+        fun calculateBackoffDelay(
+            retriedCount: Int,
+            baseDelayMs: Long = 1000L,
+            maxDelayMs: Long = 30000L
+        ): Long {
+            if (retriedCount <= 0) return baseDelayMs
+            val shift = retriedCount.coerceAtMost(5)
+            val delay = baseDelayMs * (1L shl shift)
+            return delay.coerceAtMost(maxDelayMs)
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 package com.flowspeed.lib.downloader.destination
 
-import com.flowspeed.lib.downloader.anntation.HeavyCall
+import com.flowspeed.lib.downloader.annotation.HeavyCall
 import okio.Buffer
 import okio.FileHandle
 import okio.FileSystem
@@ -19,7 +19,6 @@ class DestWriter(
 
     private var status: Status = Status.NotPrepared
 
-
     @Transient
     private var sink: Sink? = null
 
@@ -36,14 +35,12 @@ class DestWriter(
         status = Status.Preparing
         sink = writer.sink(seekPos)
         status = Status.Prepared
-//        println("part #$id started to write from $seekPos")
     }
 
     @Synchronized
     fun release() {
         sink?.close()
         status = Status.NotPrepared
-//        println("part #$id stopped to write to $seekPos")
     }
 
     fun write(buffer: Buffer, length: Long = buffer.size) {
@@ -59,25 +56,19 @@ class DestWriter(
         }
         sink!!.write(buffer, length)
         seekPos += length
-//    println("seek :$seekPos")
     }
 
     enum class Status { NotPrepared, Preparing, Prepared, Writing, Finished }
 
     fun use(block: (DestWriter) -> Unit) {
-//        println("using dest")
         prepare()
         try {
             block(this)
-        } catch (e: Exception) {
-            throw e
         } finally {
             try {
-//                println("release dest")
                 release()
             } catch (_: Exception) {
             }
         }
     }
-
 }

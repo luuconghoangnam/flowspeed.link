@@ -37,7 +37,7 @@ fun <T : Throwable> T.throwIfCancelled() {
 }
 
 
-fun Throwable.printStackIfNOtUsual() {
+fun Throwable.printStackIfNotUsual() {
     if (
         ExceptionUtils.isNormalCancellation(this) ||
         ExceptionUtils.isNetworkError(this) ||
@@ -47,4 +47,12 @@ fun Throwable.printStackIfNOtUsual() {
         return
     }
     printStackTrace()
+}
+
+@Deprecated(
+    message = "Typo in name, use printStackIfNotUsual instead",
+    replaceWith = ReplaceWith("printStackIfNotUsual()")
+)
+fun Throwable.printStackIfNOtUsual() {
+    printStackIfNotUsual()
 }

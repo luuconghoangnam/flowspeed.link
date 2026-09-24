@@ -1,6 +1,6 @@
 package com.flowspeed.lib.downloader.destination
 
-import com.flowspeed.lib.downloader.anntation.HeavyCall
+import com.flowspeed.lib.downloader.annotation.HeavyCall
 import com.flowspeed.lib.downloader.part.DownloadPart
 import com.flowspeed.lib.downloader.utils.EmptyFileCreator
 import com.flowspeed.lib.util.tryAtomicMove
@@ -58,7 +58,6 @@ class SimpleDownloadDestination(
 
     override fun onAllFilePartsRemoved() {
         super.onAllFilePartsRemoved()
-//        println("release handle")
         removeFileHandle()
     }
 
@@ -123,8 +122,6 @@ class SimpleDownloadDestination(
 
     @HeavyCall
     override suspend fun prepareFile(onProgressUpdate: (Int?) -> Unit) {
-//        println("preparing file ")
-//        println("file info path=$outputFile size=${outputFile.runCatching { length() }.getOrNull()}")
         val incompleteFile = fileToWrite
         prepareDestinationFolder()
         emptyFileCreator
