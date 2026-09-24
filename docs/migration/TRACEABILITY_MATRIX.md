@@ -39,22 +39,18 @@
 
 ---
 
-## 4. Desktop GUI & Interaction (`desktop:app` $\rightarrow$ `crates/flow_desktop`)
+## 4. Pure Native Rust Desktop GUI (`desktop:app` $\rightarrow$ `crates/flow_desktop_slint`)
 
-| Màn hình / Component Kotlin | Component Tauri v2 (Svelte/Vue + Tailwind) | Chức năng chi tiết | Trạng thái |
+| Màn hình / Component Kotlin (Compose) | Component Slint (Pure Native Rust) | Chức năng chi tiết | Trạng thái |
 | :--- | :--- | :--- | :---: |
-| `HomeScreen.kt` | `src/App.svelte` | Danh sách tải file, filter (All, Downloading, Completed, Error), thanh tốc độ tổng, tiến trình gradient mượt, mở thư mục File Explorer. | ✅ Completed |
-| `AddDownloadDialog.kt` | `src/App.svelte` (Add Modal) | Dán URL, tùy chỉnh số threads tải đa luồng, link test mẫu Cloudflare/GitHub, gọi invoke `start_download`. | ✅ Completed |
-| `BatchDownloadDialog.kt` | `src/components/BatchDownloadModal.svelte` | Nhập nhiều URL theo danh sách dòng, tùy chỉnh số luồng và thêm đồng loạt. | ✅ Completed |
-| `QueueManagerDialog.kt` | `src/components/QueueManagerModal.svelte` | Cấu hình queue, lập lịch giờ chạy, giới hạn tốc độ từng queue. | ✅ Completed |
-| `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm SHA-256 / SHA-1 / MD5 file tải về với mã hash mong muốn. | ✅ Completed |
-| `SettingsScreen.kt` | `src/components/SettingsModal.svelte` | Cài đặt folder mặc định, threads, max concurrent, autostart, port REST API (15151), lưu nguyên tử Atomic JSON. | ✅ Completed |
-| `Category.kt`<br>`NewCategoryPage.kt` | `src/components/CategoryModal.svelte`<br>`flow_core::types::FileCategory` | Phân loại tệp tin tự động (Video, Audio, Compressed, Documents, Programs) theo đuôi file & tự định tuyến folder đích. | ✅ Completed |
-| `PerHostSettingsPage.kt` | `src/components/PerHostModal.svelte`<br>`flow_core::types::PerHostRule` | Thiết lập số luồng tối đa, custom header/cookies/proxy theo từng tên miền máy chủ. | ✅ Completed |
-| `PowerActionAlertWindow.kt`<br>`PowerAction.kt` | `src/components/PowerActionModal.svelte`<br>`flow_core::types::PowerActionConfig` | Tự động Tắt máy (Shutdown), Ngủ (Sleep), Ngủ đông (Hibernate) kèm bộ đếm ngược 30s khi hoàn tất tải. | ✅ Completed |
-| `SystemTray.kt` | `crates/flow_desktop/src-tauri/src/lib.rs` (TrayIconBuilder) | Menu tray: Mở app, Ẩn khay, Thoát + Thông báo Native Windows Toast khi tải xong. | ✅ Completed |
-| `SingleInstanceServer.kt` | `crates/flow_desktop/src-tauri/src/lib.rs` | Nhúng Axum Extension Server (cổng 15151) chạy nền trong runtime Tokio của Desktop app. | ✅ Completed |
-
+| `HomeScreen.kt` | `ui/appwindow.slint`<br>`ui/components/task_row.slint` | Danh sách tải file, tiến độ %, tốc độ MB/s, dung lượng, trạng thái, nút tạm dừng/tiếp tục/mở thư mục. | ✅ Completed |
+| `Toolbar / SpeedMeter` | `ui/components/toolbar.slint`<br>`ui/components/speed_chart.slint` | Thao tác nhanh (Thêm link, Tải loạt, Dừng/Tiếp tục tất cả, Checksum, Toggle Dark/Light) & Biểu đồ sóng tốc độ Live. | ✅ Completed |
+| `AddDownloadDialog.kt` | `ui/dialogs/add_modal.slint` | Dán URL tải, chọn thư mục lưu tệp, tùy chỉnh số luồng kết nối. | ✅ Completed |
+| `BatchDownloadDialog.kt` | `ui/dialogs/batch_modal.slint` | Nhập danh sách nhiều URL + Tự động sinh link hàng loạt theo mẫu `[01-20]`, `[a-z]`. | ✅ Completed |
+| `ChecksumDialog.kt` | `ui/dialogs/checksum_modal.slint` | Kiểm tra và so khớp mã băm Streaming SHA-256 / SHA-1 / MD5. | ✅ Completed |
+| `SettingsScreen.kt` | `ui/dialogs/settings_modal.slint` | Cài đặt hệ thống 3 Tab: Tải về (Thư mục, Luồng, Đồng thời), Băng thông (Giới hạn tốc độ, Cổng server), Tiện ích (Clipboard, Khay hệ thống, Âm thanh). | ✅ Completed |
+| `Sidebar / Categories` | `ui/components/sidebar.slint` | Phân loại tệp tin theo danh mục (Tất cả, Video, Âm nhạc, Nén, Tài liệu, Phần mềm) kèm bộ đếm số lượng. | ✅ Completed |
+| `SingleInstanceServer.kt` | `crates/flow_desktop_slint/src/main.rs` | Nhúng Axum Extension Server (cổng 15151) chạy nền song song với vòng lặp sự kiện Slint. | ✅ Completed |
 
 ---
 
