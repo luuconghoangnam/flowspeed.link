@@ -1,0 +1,210 @@
+import { Theme } from "../theme.slint";
+import { TaskItem } from "../models.slint";
+
+export component TaskRow inherits Rectangle {
+    in property <TaskItem> task;
+    in property <bool> is_selected: false;
+    
+    callback clicked();
+    callback double_clicked();
+    callback right_clicked();
+    callback pause_task(string);
+    callback resume_task(string);
+    callback cancel_task(string);
+    callback open_folder(string);
+
+    height: 72px;
+    background: root.is_selected ? Theme.primary_light : (touch.has-hover ? Theme.bg_hover : Theme.bg_surface);
+    border_color: Theme.border_color;
+    border_width: 1px;
+    border_radius: 8px;
+
+    touch := TouchArea {
+        clicked => { root.clicked(); }
+        double-clicked => { root.double_clicked(); }
+    }
+
+    VerticalLayout {
+        padding: 10px;
+        spacing: 6px;
+
+        // Line 1: Icon, File Name, Category, Status Badge, Quick Actions
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: space-between;
+
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: start;
+
+                // File icon by category
+                Text {
+                    text: root.task.is_hls ? "🎬" : (root.task.category == "archives" ? "📦" : (root.task.category == "audio" ? "🎵" : (root.task.category == "programs" ? "⚙️" : "📄")));
+                    font-size: 15px;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: root.task.file_name;
+                    font-size: 13px;
+                    font-weight: 700;
+                    color: Theme.text_primary;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+
+                // Category tag
+                Rectangle {
+                    height: 18px;
+                    background: Theme.bg_card;
+                    border_radius: 4px;
+
+                    HorizontalLayout {
+                        padding-left: 6px;
+                        padding-right: 6px;
+                        alignment: center;
+                        Text {
+                            text: root.task.category;
+                            font-size: 10px;
+                            font-weight: 600;
+                            color: Theme.text_secondary;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+
+            // Status Badge & Action buttons
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: end;
+
+                // Status text
+                Rectangle {
+                    height: 20px;
+                    background: root.task.status == "Completed" ? Theme.success : (root.task.status == "Downloading" ? Theme.primary : (root.task.status == "Paused" ? Theme.warning : Theme.danger));
+                    border_radius: 4px;
+
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        alignment: center;
+                        Text {
+                            text: root.task.status == "Downloading" ? "Đang tải (" + root.task.threads_count + " luồng)" : (root.task.status == "Completed" ? "Đã xong" : (root.task.status == "Paused" ? "Đã tạm dừng" : root.task.status));
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: #ffffff;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                if root.task.status == "Downloading": Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    background: Theme.bg_card;
+                    border_radius: 4px;
+
+                    TouchArea {
+                        clicked => { root.pause_task(root.task.id); }
+                    }
+
+                    Text {
+                        text: "⏸";
+                        font-size: 11px;
+                        color: Theme.warning;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                if root.task.status == "Paused": Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    background: Theme.bg_card;
+                    border_radius: 4px;
+
+                    TouchArea {
+                        clicked => { root.resume_task(root.task.id); }
+                    }
+
+                    Text {
+                        text: "▶";
+                        font-size: 11px;
+                        color: Theme.success;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                if root.task.status == "Completed": Rectangle {
+                    width: 24px;
+                    height: 24px;
+                    background: Theme.bg_card;
+                    border_radius: 4px;
+
+                    TouchArea {
+                        clicked => { root.open_folder(root.task.save_path); }
+                    }
+
+                    Text {
+                        text: "📁";
+                        font-size: 12px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // Line 2: Progress Bar (High-precision fill)
+        Rectangle {
+            height: 6px;
+            background: Theme.progress_bg;
+            border_radius: 3px;
+            clip: true;
+
+            Rectangle {
+                width: parent.width * Math.min(1.0, Math.max(0.0, root.task.progress));
+                height: parent.height;
+                background: root.task.status == "Completed" ? Theme.progress_complete : (root.task.status == "Paused" ? Theme.progress_paused : Theme.progress_fill);
+                border_radius: 3px;
+            }
+        }
+
+        // Line 3: Download stats (Downloaded/Total, Speed, ETA)
+        HorizontalLayout {
+            alignment: space-between;
+
+            HorizontalLayout {
+                spacing: 12px;
+
+                Text {
+                    text: root.task.size_text;
+                    font-size: 11px;
+                    color: Theme.text_secondary;
+                }
+
+                if root.task.status == "Downloading": Text {
+                    text: "⚡ " + root.task.speed_text;
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: Theme.primary;
+                }
+
+                if root.task.status == "Downloading" && root.task.eta_text != "": Text {
+                    text: "⏳ " + root.task.eta_text;
+                    font-size: 11px;
+                    color: Theme.text_muted;
+                }
+            }
+
+            Text {
+                text: Math.round(root.task.progress * 100) + "%";
+                font-size: 11px;
+                font-weight: 800;
+                color: Theme.text_primary;
+            }
+        }
+    }
+}

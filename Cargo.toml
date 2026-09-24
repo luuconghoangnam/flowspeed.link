@@ -2,6 +2,7 @@
 members = [
     "crates/flow_core",
     "crates/flow_server",
+    "crates/flow_desktop_slint",
     "crates/flow_desktop/src-tauri",
 ]
 resolver = "2"

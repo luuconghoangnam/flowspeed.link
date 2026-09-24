@@ -1,0 +1,53 @@
+import { Theme } from "../theme.slint";
+
+export component SpeedChart inherits Rectangle {
+    in property <[float]> history: [0.1, 0.3, 0.6, 0.4, 0.8, 0.9, 0.7, 0.85, 0.95, 0.8];
+    in property <string> current_speed: "0.0 MB/s";
+    
+    background: Theme.bg_surface;
+    border_color: Theme.border_color;
+    border_width: 1px;
+    border_radius: 8px;
+    clip: true;
+
+    HorizontalLayout {
+        padding: 10px;
+        spacing: 12px;
+        alignment: space-between;
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 2px;
+
+            Text {
+                text: "TỐC ĐỘ HIỆN TẠI";
+                font-size: 10px;
+                font-weight: 700;
+                color: Theme.text_muted;
+                letter-spacing: 0.5px;
+            }
+
+            Text {
+                text: root.current_speed;
+                font-size: 16px;
+                font-weight: 800;
+                color: Theme.primary;
+            }
+        }
+
+        // Mini visualizer bars
+        HorizontalLayout {
+            spacing: 3px;
+            alignment: end;
+
+            for val[idx] in root.history: Rectangle {
+                width: 4px;
+                height: Math.max(4px, parent.height * Math.min(1.0, val));
+                background: Theme.primary;
+                border_radius: 2px;
+                opacity: 0.4 + (0.6 * (idx / Math.max(1, root.history.length)));
+                y: parent.height - self.height;
+            }
+        }
+    }
+}

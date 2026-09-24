@@ -1,0 +1,167 @@
+import { Theme } from "../theme.slint";
+import { CategoryData } from "../models.slint";
+
+export component Sidebar inherits Rectangle {
+    in property <[CategoryData]> categories;
+    in property <string> active_category: "all";
+    in property <string> active_tab: "downloads"; // "downloads", "queues", "history"
+    
+    callback select_category(string);
+    callback select_tab(string);
+    callback open_settings();
+
+    width: 220px;
+    background: Theme.bg_surface;
+    border_color: Theme.border_color;
+    border_width: 1px;
+
+    VerticalLayout {
+        padding: 12px;
+        spacing: 16px;
+
+        // Brand
+        HorizontalLayout {
+            spacing: 10px;
+            alignment: start;
+
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                background: Theme.primary;
+                border_radius: 8px;
+
+                Text {
+                    text: "⚡";
+                    font-size: 16px;
+                    color: #ffffff;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            VerticalLayout {
+                alignment: center;
+                spacing: 1px;
+
+                Text {
+                    text: "FlowSpeed";
+                    font-size: 14px;
+                    font-weight: 800;
+                    color: Theme.text_primary;
+                }
+
+                Text {
+                    text: "Pure Native Engine";
+                    font-size: 10px;
+                    color: Theme.text_muted;
+                }
+            }
+        }
+
+        // Divider
+        Rectangle {
+            height: 1px;
+            background: Theme.border_color;
+        }
+
+        // Category Section
+        Text {
+            text: "DANH MỤC";
+            font-size: 11px;
+            font-weight: 700;
+            color: Theme.text_muted;
+            letter-spacing: 0.5px;
+        }
+
+        VerticalLayout {
+            spacing: 4px;
+
+            for cat in root.categories: Rectangle {
+                height: 36px;
+                border_radius: 6px;
+                background: root.active_category == cat.id ? Theme.primary_light : (touch.has-hover ? Theme.bg_hover : #00000000);
+
+                touch := TouchArea {
+                    clicked => { root.select_category(cat.id); }
+                }
+
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 8px;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: start;
+
+                        Text {
+                            text: cat.icon;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: cat.name;
+                            font-size: 13px;
+                            font-weight: root.active_category == cat.id ? 700 : 500;
+                            color: root.active_category == cat.id ? Theme.primary : Theme.text_primary;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    if cat.count > 0: Rectangle {
+                        width: 22px;
+                        height: 18px;
+                        border_radius: 9px;
+                        background: root.active_category == cat.id ? Theme.primary : Theme.bg_card;
+
+                        Text {
+                            text: cat.count;
+                            font-size: 10px;
+                            font-weight: 700;
+                            color: root.active_category == cat.id ? #ffffff : Theme.text_secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Spacer to push settings down
+        Rectangle {}
+
+        // Settings Button
+        Rectangle {
+            height: 38px;
+            border_radius: 6px;
+            background: settings_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+
+            settings_touch := TouchArea {
+                clicked => { root.open_settings(); }
+            }
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                spacing: 8px;
+                alignment: start;
+
+                Text {
+                    text: "⚙️";
+                    font-size: 14px;
+                    vertical-alignment: center;
+                }
+
+                Text {
+                    text: "Cài đặt hệ thống";
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: Theme.text_primary;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

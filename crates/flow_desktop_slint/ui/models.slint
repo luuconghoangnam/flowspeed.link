@@ -1,0 +1,30 @@
+export struct TaskItem {
+    id: string,
+    url: string,
+    file_name: string,
+    save_path: string,
+    category: string,
+    total_bytes: int,
+    downloaded_bytes: int,
+    progress: float,
+    speed_bytes_per_sec: int,
+    speed_text: string,
+    eta_text: string,
+    size_text: string,
+    status: string, // "Downloading", "Paused", "Completed", "Failed", "Pending"
+    threads_count: int,
+    is_hls: bool,
+    parts_summary: string,
+}
+
+export struct SpeedPoint {
+    x: float,
+    y: float,
+}
+
+export struct CategoryData {
+    id: string,
+    name: string,
+    icon: string,
+    count: int,
+}

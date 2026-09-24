@@ -1,0 +1,208 @@
+import { Theme } from "theme.slint";
+import { TaskItem, CategoryData } from "models.slint";
+import { Sidebar } from "components/sidebar.slint";
+import { Toolbar } from "components/toolbar.slint";
+import { TaskRow } from "components/task_row.slint";
+import { AddModal } from "dialogs/add_modal.slint";
+import { BatchModal } from "dialogs/batch_modal.slint";
+import { ChecksumModal } from "dialogs/checksum_modal.slint";
+import { SettingsModal } from "dialogs/settings_modal.slint";
+import { ListView, ScrollView } from "std-widgets.slint";
+
+export component AppWindow inherits Window {
+    title: "Flow Speed Link - Pure Native Rust";
+    min-width: 900px;
+    min-height: 600px;
+    preferred-width: 1040px;
+    preferred-height: 680px;
+    background: Theme.bg_root;
+
+    // State properties
+    in property <[TaskItem]> tasks: [];
+    in property <[CategoryData]> categories: [
+        { id: "all", name: "Tất cả", icon: "📁", count: 0 },
+        { id: "downloading", name: "Đang tải", icon: "⚡", count: 0 },
+        { id: "completed", name: "Đã hoàn thành", icon: "✅", count: 0 },
+        { id: "video", name: "Video & Phim", icon: "🎬", count: 0 },
+        { id: "audio", name: "Âm nhạc", icon: "🎵", count: 0 },
+        { id: "archives", name: "Tập tin nén", icon: "📦", count: 0 },
+        { id: "documents", name: "Tài liệu", icon: "📄", count: 0 },
+        { id: "programs", name: "Phần mềm", icon: "⚙️", count: 0 }
+    ];
+    in-out property <string> active_category: "all";
+    in-out property <string> search_query: "";
+    in property <string> total_speed_text: "0.0 MB/s";
+    in property <[float]> speed_history: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+    // Modals visibility
+    in-out property <bool> show_add_modal: false;
+    in-out property <bool> show_batch_modal: false;
+    in-out property <bool> show_checksum_modal: false;
+    in-out property <bool> show_settings_modal: false;
+
+    // Callbacks to Rust
+    callback add_download(string, string, int);
+    callback add_batch_downloads(string, string, int);
+    callback pause_task(string);
+    callback resume_task(string);
+    callback cancel_task(string);
+    callback pause_all();
+    callback resume_all();
+    callback open_folder(string);
+    callback calculate_checksum(string);
+    callback save_settings();
+    callback generate_pattern(string);
+
+    HorizontalLayout {
+        // Left Sidebar
+        Sidebar {
+            categories: root.categories;
+            active_category: root.active_category;
+            select_category(cat_id) => { root.active_category = cat_id; }
+            open_settings => { root.show_settings_modal = true; }
+        }
+
+        // Right Main Content Area
+        VerticalLayout {
+            // Header Toolbar
+            Toolbar {
+                search_query: root.search_query;
+                current_speed: root.total_speed_text;
+                speed_history: root.speed_history;
+                open_add_modal => { root.show_add_modal = true; }
+                open_batch_modal => { root.show_batch_modal = true; }
+                open_checksum_modal => { root.show_checksum_modal = true; }
+                pause_all => { root.pause_all(); }
+                resume_all => { root.resume_all(); }
+                toggle_theme => { Theme.is_dark = !Theme.is_dark; }
+            }
+
+            // Task List Area
+            Rectangle {
+                background: Theme.bg_root;
+                clip: true;
+
+                if root.tasks.length == 0: VerticalLayout {
+                    alignment: center;
+                    spacing: 12px;
+
+                    Text {
+                        text: "⚡";
+                        font-size: 48px;
+                        horizontal-alignment: center;
+                    }
+
+                    Text {
+                        text: "Chưa có liên kết tải nào";
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: Theme.text_secondary;
+                        horizontal-alignment: center;
+                    }
+
+                    Text {
+                        text: "Bấm '+ Thêm link' hoặc 'Tải loạt' để bắt đầu tải tập tin";
+                        font-size: 12px;
+                        color: Theme.text_muted;
+                        horizontal-alignment: center;
+                    }
+                }
+
+                ListView {
+                    for task in root.tasks: TaskRow {
+                        task: task;
+                        pause_task(id) => { root.pause_task(id); }
+                        resume_task(id) => { root.resume_task(id); }
+                        cancel_task(id) => { root.cancel_task(id); }
+                        open_folder(path) => { root.open_folder(path); }
+                    }
+                }
+            }
+
+            // Footer Status Bar
+            Rectangle {
+                height: 28px;
+                background: Theme.bg_surface;
+                border_color: Theme.border_color;
+                border_width: 1px;
+
+                HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    alignment: space-between;
+
+                    HorizontalLayout {
+                        spacing: 12px;
+
+                        Text {
+                            text: "Tổng số tệp: " + root.tasks.length;
+                            font-size: 11px;
+                            color: Theme.text_secondary;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "•";
+                            font-size: 11px;
+                            color: Theme.text_muted;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: "Pure Native Rust Engine (0% Web / 10MB RAM)";
+                            font-size: 11px;
+                            font-weight: 600;
+                            color: Theme.success;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Text {
+                        text: "Cổng tích hợp: 15151 (Đang lắng nghe)";
+                        font-size: 11px;
+                        color: Theme.text_muted;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+
+    // Modal Overlays
+    AddModal {
+        is_open: root.show_add_modal;
+        close => { root.show_add_modal = false; }
+        submit(url, dir, thr) => {
+            root.show_add_modal = false;
+            root.add_download(url, dir, thr);
+        }
+        browse_dir => {
+            // Pick folder via native RFD
+        }
+    }
+
+    BatchModal {
+        is_open: root.show_batch_modal;
+        close => { root.show_batch_modal = false; }
+        generate_pattern(pat) => { root.generate_pattern(pat); }
+        submit_batch(urls, dir, thr) => {
+            root.show_batch_modal = false;
+            root.add_batch_downloads(urls, dir, thr);
+        }
+    }
+
+    ChecksumModal {
+        is_open: root.show_checksum_modal;
+        close => { root.show_checksum_modal = false; }
+        select_file => { /* rfd */ }
+    }
+
+    SettingsModal {
+        is_open: root.show_settings_modal;
+        close => { root.show_settings_modal = false; }
+        save_settings => {
+            root.show_settings_modal = false;
+            root.save_settings();
+        }
+    }
+}

@@ -1,0 +1,36 @@
+export global Theme {
+    in-out property <bool> is_dark: true;
+
+    // Backgrounds
+    out property <color> bg_root: is_dark ? #0f172a : #f8fafc;
+    out property <color> bg_surface: is_dark ? #1e293b : #ffffff;
+    out property <color> bg_card: is_dark ? #334155 : #f1f5f9;
+    out property <color> bg_hover: is_dark ? #475569 : #e2e8f0;
+    out property <color> bg_active: is_dark ? #64748b : #cbd5e1;
+
+    // Borders
+    out property <color> border_color: is_dark ? #334155 : #e2e8f0;
+    out property <color> border_active: is_dark ? #38bdf8 : #0284c7;
+
+    // Text colors (High contrast guaranteed)
+    out property <color> text_primary: is_dark ? #f8fafc : #0f172a;
+    out property <color> text_secondary: is_dark ? #94a3b8 : #64748b;
+    out property <color> text_muted: is_dark ? #64748b : #94a3b8;
+    out property <color> text_inverse: is_dark ? #0f172a : #ffffff;
+
+    // Accent & Status colors
+    out property <color> primary: is_dark ? #38bdf8 : #0284c7;
+    out property <color> primary_hover: is_dark ? #0ea5e9 : #0369a1;
+    out property <color> primary_light: is_dark ? #0369a1 : #e0f2fe;
+    out property <color> success: #10b981;
+    out property <color> warning: #f59e0b;
+    out property <color> danger: #ef4444;
+    out property <color> info: #6366f1;
+
+    // Progress bar
+    out property <color> progress_bg: is_dark ? #1e293b : #e2e8f0;
+    out property <color> progress_fill: is_dark ? #38bdf8 : #0284c7;
+    out property <color> progress_paused: is_dark ? #94a3b8 : #cbd5e1;
+    out property <color> progress_complete: #10b981;
+    out property <color> progress_error: #ef4444;
+}

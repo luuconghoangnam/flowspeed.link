@@ -1,0 +1,200 @@
+import { Theme } from "../theme.slint";
+import { SpeedChart } from "speed_chart.slint";
+
+export component Toolbar inherits Rectangle {
+    in property <string> search_query: "";
+    in property <string> current_speed: "0.0 MB/s";
+    in property <[float]> speed_history;
+    
+    callback open_add_modal();
+    callback open_batch_modal();
+    callback resume_all();
+    callback pause_all();
+    callback toggle_theme();
+    callback search_changed(string);
+    callback open_checksum_modal();
+
+    height: 64px;
+    background: Theme.bg_surface;
+    border_color: Theme.border_color;
+    border_width: 1px;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 12px;
+        alignment: space-between;
+
+        // Left Actions
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+
+            // Add URL Button (Primary)
+            Rectangle {
+                width: 120px;
+                height: 38px;
+                background: add_touch.has-hover ? Theme.primary_hover : Theme.primary;
+                border_radius: 6px;
+
+                add_touch := TouchArea {
+                    clicked => { root.open_add_modal(); }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 6px;
+
+                    Text {
+                        text: "+";
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: #ffffff;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "Thêm link";
+                        font-size: 13px;
+                        font-weight: 700;
+                        color: #ffffff;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Batch Button
+            Rectangle {
+                width: 110px;
+                height: 38px;
+                background: batch_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                border_color: Theme.border_color;
+                border_width: 1px;
+                border_radius: 6px;
+
+                batch_touch := TouchArea {
+                    clicked => { root.open_batch_modal(); }
+                }
+
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 6px;
+
+                    Text {
+                        text: "📦";
+                        font-size: 13px;
+                        vertical-alignment: center;
+                    }
+
+                    Text {
+                        text: "Tải loạt";
+                        font-size: 13px;
+                        font-weight: 600;
+                        color: Theme.text_primary;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+
+            // Resume All
+            Rectangle {
+                width: 38px;
+                height: 38px;
+                background: resume_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                border_color: Theme.border_color;
+                border_width: 1px;
+                border_radius: 6px;
+
+                resume_touch := TouchArea {
+                    clicked => { root.resume_all(); }
+                }
+
+                Text {
+                    text: "▶";
+                    font-size: 13px;
+                    color: Theme.success;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Pause All
+            Rectangle {
+                width: 38px;
+                height: 38px;
+                background: pause_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                border_color: Theme.border_color;
+                border_width: 1px;
+                border_radius: 6px;
+
+                pause_touch := TouchArea {
+                    clicked => { root.pause_all(); }
+                }
+
+                Text {
+                    text: "⏸";
+                    font-size: 13px;
+                    color: Theme.warning;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            // Checksum Tool
+            Rectangle {
+                width: 38px;
+                height: 38px;
+                background: check_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                border_color: Theme.border_color;
+                border_width: 1px;
+                border_radius: 6px;
+
+                check_touch := TouchArea {
+                    clicked => { root.open_checksum_modal(); }
+                }
+
+                Text {
+                    text: "🛡️";
+                    font-size: 14px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        // Center / Right: Speed Chart & Search & Dark/Light Toggle
+        HorizontalLayout {
+            spacing: 12px;
+            alignment: end;
+
+            // Speed Visualizer
+            SpeedChart {
+                width: 190px;
+                height: 42px;
+                current_speed: root.current_speed;
+                history: root.speed_history;
+            }
+
+            // Dark/Light Theme Toggle
+            Rectangle {
+                width: 38px;
+                height: 38px;
+                background: theme_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                border_color: Theme.border_color;
+                border_width: 1px;
+                border_radius: 6px;
+
+                theme_touch := TouchArea {
+                    clicked => { root.toggle_theme(); }
+                }
+
+                Text {
+                    text: Theme.is_dark ? "🌙" : "☀️";
+                    font-size: 14px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}

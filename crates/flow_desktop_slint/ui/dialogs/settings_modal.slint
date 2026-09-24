@@ -1,0 +1,323 @@
+import { Theme } from "../theme.slint";
+
+export component SettingsModal inherits Rectangle {
+    in property <bool> is_open: false;
+    in-out property <int> active_tab: 0; // 0: Download, 1: Network, 2: Appearance, 3: Integration
+
+    in-out property <string> default_download_dir: "C:\\Downloads";
+    in-out property <int> default_connections: 8;
+    in-out property <int> max_concurrent_downloads: 3;
+    in-out property <int> speed_limit_kbps: 0;
+    in-out property <int> server_port: 15151;
+    in-out property <bool> auto_start_download: true;
+    in-out property <bool> clipboard_monitor: true;
+    in-out property <bool> play_sound_on_finish: true;
+    in-out property <bool> minimize_to_tray: true;
+
+    callback close();
+    callback save_settings();
+    callback browse_default_dir();
+
+    if root.is_open: Rectangle {
+        background: #00000088;
+
+        Rectangle {
+            width: 620px;
+            height: 480px;
+            background: Theme.bg_surface;
+            border_color: Theme.border_color;
+            border_width: 1px;
+            border_radius: 12px;
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 14px;
+
+                // Header
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    Text {
+                        text: "⚙️ Cài Đặt Hệ Thống";
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: Theme.text_primary;
+                    }
+
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        background: close_touch.has-hover ? Theme.bg_hover : #00000000;
+                        border_radius: 4px;
+
+                        close_touch := TouchArea {
+                            clicked => { root.close(); }
+                        }
+
+                        Text {
+                            text: "✕";
+                            font-size: 14px;
+                            color: Theme.text_secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // Tabs Navigation
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Rectangle {
+                        height: 32px;
+                        background: root.active_tab == 0 ? Theme.primary : Theme.bg_card;
+                        border_radius: 6px;
+
+                        TouchArea { clicked => { root.active_tab = 0; } }
+
+                        HorizontalLayout {
+                            padding-left: 12px;
+                            padding-right: 12px;
+                            alignment: center;
+                            Text {
+                                text: "📥 Tải về";
+                                font-size: 12px;
+                                font-weight: 700;
+                                color: root.active_tab == 0 ? #ffffff : Theme.text_primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 32px;
+                        background: root.active_tab == 1 ? Theme.primary : Theme.bg_card;
+                        border_radius: 6px;
+
+                        TouchArea { clicked => { root.active_tab = 1; } }
+
+                        HorizontalLayout {
+                            padding-left: 12px;
+                            padding-right: 12px;
+                            alignment: center;
+                            Text {
+                                text: "🌐 Băng thông";
+                                font-size: 12px;
+                                font-weight: 700;
+                                color: root.active_tab == 1 ? #ffffff : Theme.text_primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        height: 32px;
+                        background: root.active_tab == 2 ? Theme.primary : Theme.bg_card;
+                        border_radius: 6px;
+
+                        TouchArea { clicked => { root.active_tab = 2; } }
+
+                        HorizontalLayout {
+                            padding-left: 12px;
+                            padding-right: 12px;
+                            alignment: center;
+                            Text {
+                                text: "🔔 Tiện ích";
+                                font-size: 12px;
+                                font-weight: 700;
+                                color: root.active_tab == 2 ? #ffffff : Theme.text_primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Tab Contents
+                Rectangle {
+                    height: 270px;
+                    background: Theme.bg_card;
+                    border_color: Theme.border_color;
+                    border_width: 1px;
+                    border_radius: 8px;
+
+                    if root.active_tab == 0: VerticalLayout {
+                        padding: 16px;
+                        spacing: 12px;
+
+                        Text {
+                            text: "Thư mục tải về mặc định:";
+                            font-size: 12px;
+                            font-weight: 600;
+                            color: Theme.text_secondary;
+                        }
+
+                        HorizontalLayout {
+                            spacing: 8px;
+
+                            Rectangle {
+                                height: 36px;
+                                background: Theme.bg_surface;
+                                border_color: Theme.border_color;
+                                border_width: 1px;
+                                border_radius: 6px;
+
+                                HorizontalLayout {
+                                    padding-left: 8px;
+                                    padding-right: 8px;
+                                    alignment: center;
+                                    TextInput {
+                                        text <=> root.default_download_dir;
+                                        font-size: 12px;
+                                        color: Theme.text_primary;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                width: 80px;
+                                height: 36px;
+                                background: dir_touch.has-hover ? Theme.bg_hover : Theme.bg_surface;
+                                border_color: Theme.border_color;
+                                border_width: 1px;
+                                border_radius: 6px;
+
+                                dir_touch := TouchArea {
+                                    clicked => { root.browse_default_dir(); }
+                                }
+
+                                Text {
+                                    text: "Duyệt...";
+                                    font-size: 12px;
+                                    color: Theme.text_primary;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        HorizontalLayout {
+                            spacing: 16px;
+
+                            VerticalLayout {
+                                spacing: 4px;
+                                Text { text: "Số luồng mặc định mỗi tệp:"; font-size: 11px; color: Theme.text_secondary; }
+                                Text { text: root.default_connections + " luồng (Khuyến nghị 8-16)"; font-size: 12px; font-weight: 700; color: Theme.primary; }
+                            }
+
+                            VerticalLayout {
+                                spacing: 4px;
+                                Text { text: "Số tệp tải đồng thời:"; font-size: 11px; color: Theme.text_secondary; }
+                                Text { text: root.max_concurrent_downloads + " tệp"; font-size: 12px; font-weight: 700; color: Theme.primary; }
+                            }
+                        }
+                    }
+
+                    if root.active_tab == 1: VerticalLayout {
+                        padding: 16px;
+                        spacing: 12px;
+
+                        Text {
+                            text: "Giới hạn tốc độ tải:";
+                            font-size: 12px;
+                            font-weight: 600;
+                            color: Theme.text_secondary;
+                        }
+
+                        Text {
+                            text: root.speed_limit_kbps == 0 ? "⚡ Không giới hạn (Tốc độ tối đa)" : (root.speed_limit_kbps + " KB/s");
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: Theme.primary;
+                        }
+
+                        Rectangle { height: 1px; background: Theme.border_color; }
+
+                        Text {
+                            text: "Cổng Server nhận link từ Browser Extension:";
+                            font-size: 12px;
+                            font-weight: 600;
+                            color: Theme.text_secondary;
+                        }
+
+                        Text {
+                            text: "Cổng HTTP: " + root.server_port + " (Tương thích 100% Extension)";
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: Theme.success;
+                        }
+                    }
+
+                    if root.active_tab == 2: VerticalLayout {
+                        padding: 16px;
+                        spacing: 12px;
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Tự động phát hiện liên kết trong Clipboard"; font-size: 12px; color: Theme.text_primary; vertical-alignment: center; }
+                            Text { text: root.clipboard_monitor ? "Đang BẬT" : "TẮT"; font-size: 12px; font-weight: 700; color: root.clipboard_monitor ? Theme.success : Theme.text_muted; vertical-alignment: center; }
+                        }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Âm thanh thông báo khi tải xong"; font-size: 12px; color: Theme.text_primary; vertical-alignment: center; }
+                            Text { text: root.play_sound_on_finish ? "Đang BẬT" : "TẮT"; font-size: 12px; font-weight: 700; color: root.play_sound_on_finish ? Theme.success : Theme.text_muted; vertical-alignment: center; }
+                        }
+
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "Thu nhỏ xuống khay hệ thống (Tray)"; font-size: 12px; color: Theme.text_primary; vertical-alignment: center; }
+                            Text { text: root.minimize_to_tray ? "Đang BẬT" : "TẮT"; font-size: 12px; font-weight: 700; color: root.minimize_to_tray ? Theme.success : Theme.text_muted; vertical-alignment: center; }
+                        }
+                    }
+                }
+
+                // Footer
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 10px;
+
+                    Rectangle {
+                        width: 90px;
+                        height: 36px;
+                        background: cancel_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                        border_radius: 6px;
+
+                        cancel_touch := TouchArea {
+                            clicked => { root.close(); }
+                        }
+
+                        Text {
+                            text: "Đóng";
+                            font-size: 13px;
+                            font-weight: 600;
+                            color: Theme.text_secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        width: 120px;
+                        height: 36px;
+                        background: save_touch.has-hover ? Theme.primary_hover : Theme.primary;
+                        border_radius: 6px;
+
+                        save_touch := TouchArea {
+                            clicked => { root.save_settings(); }
+                        }
+
+                        Text {
+                            text: "Lưu cài đặt";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

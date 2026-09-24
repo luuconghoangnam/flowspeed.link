@@ -1,0 +1,231 @@
+import { Theme } from "../theme.slint";
+
+export component ChecksumModal inherits Rectangle {
+    in property <bool> is_open: false;
+    in-out property <string> file_path: "";
+    in-out property <string> hash_sha256: "";
+    in-out property <string> hash_md5: "";
+    in-out property <string> compare_hash: "";
+    in-out property <string> match_status: ""; // "", "MATCH", "MISMATCH"
+
+    callback close();
+    callback select_file();
+    callback verify_hash();
+
+    if root.is_open: Rectangle {
+        background: #00000088;
+
+        Rectangle {
+            width: 540px;
+            height: 380px;
+            background: Theme.bg_surface;
+            border_color: Theme.border_color;
+            border_width: 1px;
+            border_radius: 12px;
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 14px;
+
+                // Header
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    Text {
+                        text: "🛡️ Kiểm Tra Mã Băm (Checksum Verification)";
+                        font-size: 15px;
+                        font-weight: 800;
+                        color: Theme.text_primary;
+                    }
+
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        background: close_touch.has-hover ? Theme.bg_hover : #00000000;
+                        border_radius: 4px;
+
+                        close_touch := TouchArea {
+                            clicked => { root.close(); }
+                        }
+
+                        Text {
+                            text: "✕";
+                            font-size: 14px;
+                            color: Theme.text_secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // File path
+                HorizontalLayout {
+                    spacing: 8px;
+
+                    Rectangle {
+                        height: 36px;
+                        background: Theme.bg_card;
+                        border_color: Theme.border_color;
+                        border_width: 1px;
+                        border_radius: 6px;
+
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            alignment: center;
+                            TextInput {
+                                text <=> root.file_path;
+                                font-size: 12px;
+                                color: Theme.text_primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        width: 90px;
+                        height: 36px;
+                        background: select_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                        border_radius: 6px;
+
+                        select_touch := TouchArea {
+                            clicked => { root.select_file(); }
+                        }
+
+                        Text {
+                            text: "Chọn tệp";
+                            font-size: 12px;
+                            font-weight: 600;
+                            color: Theme.text_primary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // SHA-256 Result
+                VerticalLayout {
+                    spacing: 2px;
+
+                    Text {
+                        text: "SHA-256:";
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: Theme.text_muted;
+                    }
+
+                    Rectangle {
+                        height: 32px;
+                        background: Theme.bg_card;
+                        border_radius: 6px;
+
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            alignment: center;
+                            Text {
+                                text: root.hash_sha256 == "" ? "Chưa tính toán" : root.hash_sha256;
+                                font-size: 11px;
+                                color: Theme.primary;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+                    }
+                }
+
+                // Compare input
+                VerticalLayout {
+                    spacing: 2px;
+
+                    Text {
+                        text: "Nhập mã băm đối chiếu (SHA-256 / MD5):";
+                        font-size: 11px;
+                        font-weight: 700;
+                        color: Theme.text_muted;
+                    }
+
+                    Rectangle {
+                        height: 36px;
+                        background: Theme.bg_card;
+                        border_color: Theme.border_color;
+                        border_width: 1px;
+                        border_radius: 6px;
+
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            alignment: center;
+                            TextInput {
+                                text <=> root.compare_hash;
+                                font-size: 12px;
+                                color: Theme.text_primary;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Match Badge
+                if root.match_status == "MATCH": Rectangle {
+                    height: 32px;
+                    background: #10b98122;
+                    border_color: Theme.success;
+                    border_width: 1px;
+                    border_radius: 6px;
+
+                    Text {
+                        text: "✅ MÃ BĂM HOÀN TOÀN TRÙNG KHỚP (TỆP TOÀN VẸN)";
+                        font-size: 12px;
+                        font-weight: 800;
+                        color: Theme.success;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                if root.match_status == "MISMATCH": Rectangle {
+                    height: 32px;
+                    background: #ef444422;
+                    border_color: Theme.danger;
+                    border_width: 1px;
+                    border_radius: 6px;
+
+                    Text {
+                        text: "❌ MÃ BĂM KHÔNG KHỚP (CÓ THỂ BỊ LỖI HOẶC SỬA ĐỔI)";
+                        font-size: 12px;
+                        font-weight: 800;
+                        color: Theme.danger;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
+
+                // Footer
+                HorizontalLayout {
+                    alignment: end;
+
+                    Rectangle {
+                        width: 100px;
+                        height: 36px;
+                        background: done_touch.has-hover ? Theme.primary_hover : Theme.primary;
+                        border_radius: 6px;
+
+                        done_touch := TouchArea {
+                            clicked => { root.close(); }
+                        }
+
+                        Text {
+                            text: "Đóng";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

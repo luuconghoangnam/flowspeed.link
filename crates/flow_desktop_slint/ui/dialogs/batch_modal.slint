@@ -1,0 +1,194 @@
+import { Theme } from "../theme.slint";
+
+export component BatchModal inherits Rectangle {
+    in property <bool> is_open: false;
+    in-out property <string> pattern_input: "https://example.com/files/part_[01-05].zip";
+    in-out property <string> urls_text: "";
+    in-out property <string> save_dir: "C:\\Downloads";
+    in-out property <int> threads: 4;
+
+    callback close();
+    callback generate_pattern(string);
+    callback submit_batch(string, string, int);
+
+    if root.is_open: Rectangle {
+        background: #00000088;
+
+        Rectangle {
+            width: 580px;
+            height: 480px;
+            background: Theme.bg_surface;
+            border_color: Theme.border_color;
+            border_width: 1px;
+            border_radius: 12px;
+
+            VerticalLayout {
+                padding: 20px;
+                spacing: 14px;
+
+                // Header
+                HorizontalLayout {
+                    alignment: space-between;
+
+                    Text {
+                        text: "📦 Tải Hàng Loạt & Sinh URL Theo Mẫu";
+                        font-size: 15px;
+                        font-weight: 800;
+                        color: Theme.text_primary;
+                    }
+
+                    Rectangle {
+                        width: 28px;
+                        height: 28px;
+                        background: close_touch.has-hover ? Theme.bg_hover : #00000000;
+                        border_radius: 4px;
+
+                        close_touch := TouchArea {
+                            clicked => { root.close(); }
+                        }
+
+                        Text {
+                            text: "✕";
+                            font-size: 14px;
+                            color: Theme.text_secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+
+                // Pattern generator input
+                VerticalLayout {
+                    spacing: 4px;
+
+                    Text {
+                        text: "Mẫu sinh URL tự động (ví dụ [01-10] hoặc [a-z]):";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: Theme.text_secondary;
+                    }
+
+                    HorizontalLayout {
+                        spacing: 8px;
+
+                        Rectangle {
+                            height: 36px;
+                            background: Theme.bg_card;
+                            border_color: Theme.border_color;
+                            border_width: 1px;
+                            border_radius: 6px;
+
+                            HorizontalLayout {
+                                padding-left: 8px;
+                                padding-right: 8px;
+                                alignment: center;
+                                TextInput {
+                                    text <=> root.pattern_input;
+                                    font-size: 12px;
+                                    color: Theme.text_primary;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: 90px;
+                            height: 36px;
+                            background: gen_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                            border_radius: 6px;
+
+                            gen_touch := TouchArea {
+                                clicked => { root.generate_pattern(root.pattern_input); }
+                            }
+
+                            Text {
+                                text: "⚡ Tạo danh sách";
+                                font-size: 11px;
+                                font-weight: 700;
+                                color: Theme.primary;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+
+                // Textarea for URLs
+                VerticalLayout {
+                    spacing: 4px;
+
+                    Text {
+                        text: "Danh sách liên kết (Mỗi dòng một URL):";
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: Theme.text_secondary;
+                    }
+
+                    Rectangle {
+                        height: 180px;
+                        background: Theme.bg_card;
+                        border_color: Theme.border_color;
+                        border_width: 1px;
+                        border_radius: 6px;
+
+                        HorizontalLayout {
+                            padding: 8px;
+                            TextInput {
+                                text <=> root.urls_text;
+                                font-size: 12px;
+                                color: Theme.text_primary;
+                                single-line: false;
+                            }
+                        }
+                    }
+                }
+
+                // Footer
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 10px;
+
+                    Rectangle {
+                        width: 90px;
+                        height: 36px;
+                        background: cancel_touch.has-hover ? Theme.bg_hover : Theme.bg_card;
+                        border_radius: 6px;
+
+                        cancel_touch := TouchArea {
+                            clicked => { root.close(); }
+                        }
+
+                        Text {
+                            text: "Hủy";
+                            font-size: 13px;
+                            font-weight: 600;
+                            color: Theme.text_secondary;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        width: 130px;
+                        height: 36px;
+                        background: ok_touch.has-hover ? Theme.primary_hover : Theme.primary;
+                        border_radius: 6px;
+
+                        ok_touch := TouchArea {
+                            clicked => { root.submit_batch(root.urls_text, root.save_dir, root.threads); }
+                        }
+
+                        Text {
+                            text: "Bắt đầu tải tất cả";
+                            font-size: 13px;
+                            font-weight: 700;
+                            color: #ffffff;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
