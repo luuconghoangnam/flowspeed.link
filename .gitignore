@@ -1,21 +1,30 @@
+# Rust build artifacts
+target/
+**/target/
+
+# Node.js dependencies & builds
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tauri build artifacts
+**/src-tauri/target/
+
 # Ignore Gradle project-specific cache directory
 .gradle
 .kotlin
-
-# Ignore Gradle build output directory
 build
+**/build/
 .idea
 local.properties
 
 # Ignore android keystores
 *.jks
-
-# Rust build artifacts
-target/
-
-# Node.js dependencies
-node_modules/
-dist/
 
 # Ownership registry (private)
 .ownership
