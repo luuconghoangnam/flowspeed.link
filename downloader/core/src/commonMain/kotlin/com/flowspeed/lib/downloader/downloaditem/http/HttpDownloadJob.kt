@@ -474,22 +474,22 @@ class HttpDownloadJob(
             downloadedSizeBeforeRetry = decision.newDownloadedSizeBeforeRetry
 
             if (decision.shouldRetry) {
-                retry(isInFirstResume)
+                retry(isInFirstResume, decision.retryDelayMs)
             } else {
                 pause(TooManyErrorException(e))
             }
         }
     }
 
-    fun retry(isInFirstResume: Boolean) {
+    fun retry(isInFirstResume: Boolean, retryDelay: Long = delayForEachRetry) {
         scope.launch {
             val newScopeResult = retryLock.tryLocked {
                 val job = async {
                     saveState()
                     cancelDownloadScope()
                     stopAllParts()
-                    _status.update { DownloadJobStatus.Retrying(delayForEachRetry) }
-                    delay(delayForEachRetry)
+                    _status.update { DownloadJobStatus.Retrying(retryDelay) }
+                    delay(retryDelay)
                     createAndInitializeDownloadScope()
                 }
                 retryJob = job

@@ -72,4 +72,17 @@ class HttpRetryPolicyTest {
         assertEquals(100, state.newDownloadedSizeBeforeRetry)
         assertTrue(state.shouldRetry)
     }
+
+    @Test
+    fun `calculateBackoffDelay produces exponential delay bounded by maxDelayMs`() {
+        val policy = HttpRetryPolicy(maxAllowedRetries = 5)
+
+        assertEquals(1000L, policy.calculateBackoffDelay(0))
+        assertEquals(2000L, policy.calculateBackoffDelay(1))
+        assertEquals(4000L, policy.calculateBackoffDelay(2))
+        assertEquals(8000L, policy.calculateBackoffDelay(3))
+        assertEquals(16000L, policy.calculateBackoffDelay(4))
+        assertEquals(30000L, policy.calculateBackoffDelay(5)) // capped by max 30_000L
+        assertEquals(30000L, policy.calculateBackoffDelay(10)) // capped by max 30_000L
+    }
 }

@@ -29,6 +29,7 @@ import kotlin.math.min
 
 const val PART_MAX_TRIES = 10
 const val RetryDelay = 1_000L
+const val OPTIMAL_PART_BUFFER_SIZE = 64 * 1024L
 
 abstract class PartDownloader<
         TPart : DownloadPart
@@ -257,9 +258,9 @@ abstract class PartDownloader<
         val buffer = Buffer()
         var totalReadCount = 0L
         var firstLoop = true
-        val bufferSize = DEFAULT_BUFFER_SIZE.toLong()
+        val bufferSize = OPTIMAL_PART_BUFFER_SIZE
         while (true) {
-            if (stop || Thread.currentThread().isInterrupted) {
+            if (stop) {
                 onCanceled(kotlinx.coroutines.CancellationException())
                 break
             }
