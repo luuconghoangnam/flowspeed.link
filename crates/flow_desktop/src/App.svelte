@@ -36,37 +36,13 @@
   let threadCount = 8;
   let isSubmitting = false;
 
-  let downloads: DownloadItem[] = [
-    {
-      id: "sample-1",
-      url: "https://releases.ubuntu.com/noble/ubuntu-24.04-desktop-amd64.iso",
-      name: "ubuntu-24.04-desktop-amd64.iso",
-      sizeFormatted: "5.7 GB",
-      totalBytes: 6120328192,
-      downloadedBytes: 4161823170,
-      progress: 68,
-      speedFormatted: "42.5 MB/s",
-      etaFormatted: "38s",
-      status: "downloading",
-    },
-    {
-      id: "sample-2",
-      url: "https://doc.rust-lang.org/book/book.pdf",
-      name: "Rust-Book-Edition-2024.pdf",
-      sizeFormatted: "15.2 MB",
-      totalBytes: 15938304,
-      downloadedBytes: 15938304,
-      progress: 100,
-      speedFormatted: "0 B/s",
-      etaFormatted: "Hoàn tất",
-      status: "completed",
-    },
-  ];
+  let downloads: DownloadItem[] = [];
 
   // Tính tổng tốc độ thời gian thực
   $: totalSpeed = downloads
-    .filter((d) => d.status === "downloading")
+    .filter((d) => d.status === "downloading" && d.downloadedBytes > 0)
     .map((d) => d.speedFormatted)
+    .filter(Boolean)
     .join(", ") || "0 B/s";
 
   // Lọc danh sách theo tab
@@ -200,8 +176,14 @@
     return formatBytes(bps) + "/s";
   }
 
-  function fillSampleUrl() {
-    inputUrl = "https://raw.githubusercontent.com/rust-lang/rust/master/README.md";
+  function setTestUrl(type: '10mb' | '100mb' | 'small') {
+    if (type === '10mb') {
+      inputUrl = "https://speed.hetzner.de/10MB.bin";
+    } else if (type === '100mb') {
+      inputUrl = "https://speed.hetzner.de/100MB.bin";
+    } else {
+      inputUrl = "https://raw.githubusercontent.com/rust-lang/rust/master/README.md";
+    }
   }
 </script>
 
@@ -384,8 +366,13 @@
               placeholder="https://example.com/file.zip"
               class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none text-white text-sm font-mono placeholder:text-slate-600 transition-all"
             />
-            <div class="mt-1 flex justify-end">
-              <button on:click={fillSampleUrl} class="text-xs text-indigo-400 hover:underline">Dán link test mẫu</button>
+            <div class="mt-2 flex items-center justify-between">
+              <span class="text-xs text-slate-500">Mẫu kiểm tra nhanh:</span>
+              <div class="flex space-x-2">
+                <button type="button" on:click={() => setTestUrl('small')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-indigo-300 hover:bg-slate-700">README (3KB)</button>
+                <button type="button" on:click={() => setTestUrl('10mb')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 hover:bg-slate-700">10MB File</button>
+                <button type="button" on:click={() => setTestUrl('100mb')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-emerald-300 hover:bg-slate-700">100MB File</button>
+              </div>
             </div>
           </div>
 

@@ -292,4 +292,32 @@ mod tests {
         assert!(result.is_ok());
         assert!(target_file.exists());
     }
+
+    #[tokio::test]
+    async fn test_real_download_coordinator() {
+        let dir = tempdir().unwrap();
+        let target_file = dir.path().join("README.md");
+        let coordinator = HttpDownloadCoordinator::new(4);
+        let canceled = Arc::new(AtomicBool::new(false));
+
+        let result = coordinator
+            .start_download(
+                "real-test-1".to_string(),
+                "https://raw.githubusercontent.com/rust-lang/rust/master/README.md".to_string(),
+                HashMap::new(),
+                target_file.clone(),
+                canceled,
+                |prog| {
+                    println!("Progress received: {}/{} bytes, speed: {} bps", prog.downloaded_bytes, prog.total_bytes.unwrap_or(0), prog.speed_bps);
+                },
+            )
+            .await;
+
+        println!("Real download result: {:?}", result);
+        assert!(result.is_ok());
+        assert!(target_file.exists());
+        let content = std::fs::read_to_string(&target_file).unwrap();
+        assert!(content.contains("Rust"));
+        println!("File downloaded successfully! Length: {} bytes", content.len());
+    }
 }
