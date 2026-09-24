@@ -102,7 +102,7 @@ class HttpPartDownloaderTest {
 
     @Test
     fun `short response without content range fails and closes connection`() = runTest {
-        val fixture = fixture(contentLength = 50)
+        val fixture = fixture(contentLength = 50, responseHeaders = emptyMap())
 
         assertFailsWith<ServerPartIsNotTheSameAsWeExpectException> {
             fixture.downloader.connectAndVerify()

@@ -10,7 +10,7 @@ import com.flowspeed.lib.downloader.utils.ExceptionUtils
 import com.flowspeed.lib.downloader.utils.printStackIfNOtUsual
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -25,7 +25,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import okio.Buffer
 import okio.Source
 import okio.use
-import kotlin.concurrent.thread
 import kotlin.math.min
 
 const val PART_MAX_TRIES = 10
@@ -37,7 +36,7 @@ abstract class PartDownloader<
     val part: TPart,
     val getDestWriter: () -> DestWriter
 ) {
-    private var thread: Thread? = null
+    private var downloadJob: Job? = null
     private var scope: CoroutineScope? = null
     private val _statusFlow = part.statusFlow
     val statusFlow = _statusFlow.asStateFlow()
@@ -145,14 +144,14 @@ abstract class PartDownloader<
     var stop = false
     fun stop() {
         stop = true
-        thread?.interrupt()
+        downloadJob?.cancel()
         scope?.coroutineContext?.job?.cancel()
     }
 
     suspend fun join() {
         withContext(Dispatchers.IO) {
             scope?.coroutineContext?.job?.join()
-            thread?.join()
+            downloadJob?.join()
         }
     }
 
@@ -180,7 +179,12 @@ abstract class PartDownloader<
     lateinit var onTooManyErrors: ((Throwable) -> Unit)
     private fun iCantRetryAnymore(throwable: Throwable) {
         lastCriticalException = throwable
-        GlobalScope.launch {
+        val currentScope = scope
+        if (currentScope?.isActive == true) {
+            currentScope.launch {
+                onTooManyErrors(throwable)
+            }
+        } else {
             onTooManyErrors(throwable)
         }
     }
@@ -202,11 +206,12 @@ abstract class PartDownloader<
     private suspend fun download() {
         onNewStatus(PartDownloadStatus.Connecting)
         val conn = connectAndVerify()
-        thread = thread {
-            if (stop || Thread.currentThread().isInterrupted) {
+        val currentScope = scope ?: return
+        downloadJob = currentScope.launch(Dispatchers.IO) {
+            if (stop || !isActive) {
                 conn.close()
                 onCanceled(kotlinx.coroutines.CancellationException())
-                return@thread
+                return@launch
             }
 //            thisLogger().info("going to copy data to destination $conn")
             try {
@@ -220,7 +225,7 @@ abstract class PartDownloader<
             } catch (e: Exception) {
                 onCanceled(e)
             } finally {
-                thread = null
+                downloadJob = null
             }
         }
     }
