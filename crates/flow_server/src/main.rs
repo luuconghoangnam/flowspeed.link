@@ -21,7 +21,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let state = Arc::new(AppState {
-        queue_manager: Arc::new(QueueManager::new(3)),
+        queue_manager: Arc::new(QueueManager::new()),
     });
 
     let app = Router::new()

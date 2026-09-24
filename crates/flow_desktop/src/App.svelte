@@ -13,12 +13,14 @@
     Zap,
     ShieldCheck,
     ListPlus,
+    Layers,
   } from "lucide-svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
   import SettingsModal from "./components/SettingsModal.svelte";
   import ChecksumModal from "./components/ChecksumModal.svelte";
   import BatchDownloadModal from "./components/BatchDownloadModal.svelte";
+  import QueueManagerModal from "./components/QueueManagerModal.svelte";
 
   interface DownloadItem {
     id: string;
@@ -40,6 +42,7 @@
   let showSettingsModal = false;
   let showChecksumModal = false;
   let showBatchModal = false;
+  let showQueueModal = false;
 
   let selectedChecksumFile = { path: "", name: "" };
 
@@ -312,6 +315,14 @@
           <ListPlus class="h-4 w-4 text-cyan-400" />
           <span>Tải hàng loạt</span>
         </button>
+
+        <button
+          on:click={() => (showQueueModal = true)}
+          class="flex items-center space-x-2 px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 text-slate-300 rounded-lg text-xs font-medium transition-all"
+        >
+          <Layers class="h-4 w-4 text-indigo-400" />
+          <span>Hàng đợi tải</span>
+        </button>
       </div>
 
       <div class="flex items-center space-x-6 text-xs font-mono">
@@ -476,4 +487,5 @@
     fileName={selectedChecksumFile.name}
   />
   <BatchDownloadModal bind:show={showBatchModal} />
+  <QueueManagerModal bind:show={showQueueModal} />
 </div>

@@ -21,9 +21,9 @@
 
 | Phân hệ / Class Kotlin (Legacy) | File / Struct Rust (Mới) | Trọng tâm Logic & Thuật toán cần khớp 100% | Test Coverage | Trạng thái |
 | :--- | :--- | :--- | :--- | :---: |
-| `QueueManager.kt`<br>`DownloadQueue.kt` | `flow_core::queue::manager`<br>`flow_core::queue::queue_actor` | - Quản lý nhiều hàng đợi tải độc lập.<br>- Giới hạn số file tải đồng thời (`maxConcurrent`).<br>- Actor message passing (`tokio::sync::mpsc`). | `tests/test_queue_manager.rs` | ⏳ Pending |
-| `TransactionalFileSaver.kt`<br>`DownloadListFileStorage.kt` | `flow_core::storage::atomic_store` | - Ghi nguyên tử qua file `.tmp` và rename `std::fs::rename`.<br>- JSON Serialization qua `serde_json`.<br>- Chống hỏng dữ liệu khi crash/mất điện. | `tests/test_atomic_store.rs` | ⏳ Pending |
-| Schedule times (Auto-start/stop) | `flow_core::queue::scheduler` | - Lập lịch tự động bật/tắt queue theo giờ cấu hình. | `tests/test_scheduler.rs` | ⏳ Pending |
+| `QueueManager.kt`<br>`DownloadQueue.kt` | `flow_core::queue::manager` | - Quản lý nhiều hàng đợi tải độc lập.<br>- Giới hạn số file tải đồng thời (`maxConcurrent`).<br>- Tự động kích hoạt task kế tiếp khi task hiện tại xong. | `test_queue_lifecycle_and_concurrency` | ✅ Completed |
+| `TransactionalFileSaver.kt`<br>`DownloadListFileStorage.kt` | `flow_core::storage::atomic` | - Ghi nguyên tử qua file `.tmp` và rename `std::fs::rename`.<br>- JSON Serialization qua `serde_json`.<br>- Chống hỏng dữ liệu khi crash/mất điện. | `test_atomic_save_and_load`<br>`test_queue_persistence_save_and_load` | ✅ Completed |
+| Schedule times (Auto-start/stop) | `flow_core::queue::manager` | - Lập lịch tự động bật/tắt queue theo giờ cấu hình (`auto_start_time`, `auto_stop_time`). | `test_queue_lifecycle_and_concurrency` | ✅ Completed |
 
 ---
 
@@ -31,11 +31,11 @@
 
 | API / Endpoint (`REST-API.yml`) | Handler Rust (Axum) | Payload & Contract | Tương thích Extension | Trạng thái |
 | :--- | :--- | :--- | :--- | :---: |
-| `GET /` | `routes::handle_health_check` | Health check endpoint kiểm tra app đang chạy | ✅ 100% `background.js` | ⏳ Pending |
-| `POST /add` | `routes::handle_add_downloads` | Request: `{ items: [...], options: {...} }` hoặc `[ { link, ... } ]` | ✅ 100% `background.js` | ⏳ Pending |
-| `GET /queues` | `routes::handle_get_queues` | Response: `[ { id: 1, name: "Default" } ]` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
-| `POST /start-headless-download` | `routes::handle_headless_download`| Request: `{ downloadSource, folder, name, queueId }` | ✅ 100% Chrome/Firefox Ext | ⏳ Pending |
-| `SingleInstanceServer.kt` | `flow_server::single_instance` | - Mutex Lock chống mở 2 app.<br>- Chuyển tiếp URL sang instance chính qua local socket. | N/A | ⏳ Pending |
+| `GET /` | `routes::handle_health_check` | Health check endpoint kiểm tra app đang chạy | ✅ 100% `background.js` | ✅ Completed |
+| `POST /add` | `routes::handle_add_downloads` | Request: `{ items: [...], options: {...} }` hoặc `[ { link, ... } ]` | ✅ 100% `background.js` | ✅ Completed |
+| `GET /queues` | `routes::handle_get_queues` | Response: `[ { id: 1, name: "Mặc định" } ]` | ✅ 100% Chrome/Firefox Ext | ✅ Completed |
+| `POST /start-headless-download` | `routes::handle_headless_download`| Request: `{ downloadSource, folder, name, queueId }` | ✅ 100% Chrome/Firefox Ext | ✅ Completed |
+| `SingleInstanceServer.kt` | `flow_server::main` (`SingleInstance`) | - Mutex Lock chống mở 2 app cùng lúc. | ✅ `SingleInstance` Lock | ✅ Completed |
 
 ---
 
@@ -46,7 +46,7 @@
 | `HomeScreen.kt` | `src/App.svelte` | Danh sách tải file, filter (All, Downloading, Completed, Error), thanh tốc độ tổng, tiến trình gradient mượt, mở thư mục File Explorer. | ✅ Completed |
 | `AddDownloadDialog.kt` | `src/App.svelte` (Add Modal) | Dán URL, tùy chỉnh số threads tải đa luồng, link test mẫu Cloudflare/GitHub, gọi invoke `start_download`. | ✅ Completed |
 | `BatchDownloadDialog.kt` | `src/components/BatchDownloadModal.svelte` | Nhập nhiều URL theo danh sách dòng, tùy chỉnh số luồng và thêm đồng loạt. | ✅ Completed |
-| `QueueManagerDialog.kt` | `src/components/QueueManagerModal.svelte` | Cấu hình queue, lập lịch giờ chạy, giới hạn tốc độ từng queue. | ⏳ Pending |
+| `QueueManagerDialog.kt` | `src/components/QueueManagerModal.svelte` | Cấu hình queue, lập lịch giờ chạy, giới hạn tốc độ từng queue. | ✅ Completed |
 | `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm SHA-256 / SHA-1 / MD5 file tải về với mã hash mong muốn. | ✅ Completed |
 | `SettingsScreen.kt` | `src/components/SettingsModal.svelte` | Cài đặt folder mặc định, threads, max concurrent, autostart, port REST API (15151), lưu nguyên tử Atomic JSON. | ✅ Completed |
 | `SystemTray.kt` | Tauri System Tray API | Menu tray: Mở app, Pause All, Resume All, Thoát. | ⏳ Pending |
