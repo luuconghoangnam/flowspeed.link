@@ -11,16 +11,16 @@
 ## 🎯 Danh Sách Hạng Mục Công Việc
 
 ### Giai đoạn 1: Rust Core Engine (`crates/flow_core`)
-- [ ] Khởi tạo Cargo Workspace (`Cargo.toml`, `crates/flow_core`).
-- [ ] Module `flow_core::types` (DownloadTask, PartState, TaskStatus, DownloadProgress).
-- [ ] Module `flow_core::resilience::backoff` (Exponential Backoff + Jitter).
-- [ ] Module `flow_core::checksum` (Streaming MD5, SHA-1, SHA-256).
-- [ ] Module `flow_core::storage::sparse` (Windows NTFS `FSCTL_SET_SPARSE`).
-- [ ] Module `flow_core::storage::atomic` (Atomic file JSON storage).
-- [ ] Module `flow_core::downloader::range` (HTTP Range, Multi-part downloader, Dynamic split).
+- [x] Khởi tạo Cargo Workspace (`Cargo.toml`, `crates/flow_core`).
+- [x] Module `flow_core::types` (DownloadTask, PartState, TaskStatus, DownloadProgress).
+- [x] Module `flow_core::resilience::backoff` (Exponential Backoff + Jitter).
+- [x] Module `flow_core::checksum` (Streaming MD5, SHA-1, SHA-256).
+- [x] Module `flow_core::storage::sparse` (Windows NTFS `FSCTL_SET_SPARSE`).
+- [x] Module `flow_core::storage::atomic` (Atomic file JSON storage).
+- [x] Module `flow_core::downloader::coordinator` (HTTP Range, Multi-part downloader, Dynamic split, Real-time Speed/ETA).
 - [ ] Module `flow_core::downloader::hls` (M3U8 Parser & Parallel TS downloader).
 - [ ] Module `flow_core::queue::manager` (Actor-based Concurrency Manager & Scheduler).
-- [ ] Unit Test Suite (`cargo test` pass 100%).
+- [x] Unit Test Suite (`cargo test -p flow_core` pass 100%).
 
 ### Giai đoạn 2: Integration Server & IPC (`crates/flow_server`)
 - [ ] Module `flow_server::routes` (Axum REST API port 15151: `/add`, `/queues`, `/start-headless-download`).
