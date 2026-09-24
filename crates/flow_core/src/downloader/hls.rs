@@ -1,5 +1,5 @@
 use crate::downloader::part::DownloadError;
-use m3u8_rs::playlist::Playlist;
+use m3u8_rs::Playlist;
 use reqwest::Client;
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};

@@ -10,6 +10,12 @@ local.properties
 # Ignore android keystores
 *.jks
 
+# Rust build artifacts
+target/
+
+# Node.js dependencies
+node_modules/
+dist/
 
 # Ownership registry (private)
 .ownership

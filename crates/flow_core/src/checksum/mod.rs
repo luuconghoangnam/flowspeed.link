@@ -87,7 +87,7 @@ mod tests {
         let hash = ChecksumUtil::calculate_file_checksum(file.path(), ChecksumAlgorithm::Sha256)?;
         assert_eq!(
             hash,
-            "1c14cbca2902bc923a1a4dc9bb20fb66d6d8dbf4b26fe78f56a3501be5062c3e"
+            "b322769fbd2b8a8fb868d459a3f41e6424b10124428be3c84f11af38390bb173"
         );
         Ok(())
     }

@@ -11,7 +11,7 @@ pub fn mark_as_sparse_file(_file: &File) -> io::Result<()> {
     {
         use windows_sys::Win32::Foundation::HANDLE;
         use windows_sys::Win32::System::Ioctl::FSCTL_SET_SPARSE;
-        use windows_sys::Win32::Storage::FileSystem::DeviceIoControl;
+        use windows_sys::Win32::System::IO::DeviceIoControl;
 
         let handle = _file.as_raw_handle() as HANDLE;
         let mut bytes_returned = 0u32;
