@@ -8,12 +8,12 @@
 
 | Phân hệ / Class Kotlin (Legacy) | File / Struct Rust (Mới) | Trọng tâm Logic & Thuật toán cần khớp 100% | Test Coverage | Trạng thái |
 | :--- | :--- | :--- | :--- | :---: |
-| `PartDownloader.kt`<br>`HttpPartDownloader.kt`<br>`HttpDownloadJob.kt` | `flow_core::downloader::part`<br>`flow_core::downloader::coordinator` | - HTTP 206 Partial Content range requests.<br>- Buffer 64KB I/O streaming.<br>- Dynamic split part khi có luồng tải xong sớm.<br>- Pause, Resume, Cancel an toàn.<br>- Real-time speed & ETA metering. | `cargo test -p flow_core` (5 tests pass) | ✅ Completed |
-| `HLSDownloadJob.kt`<br>`HLSResponseInfo.kt` | `flow_core::downloader::hls` | - Parse M3U8 Master / Media Playlists.<br>- Tải song song các media chunks (.ts, .aac, .fmp4).<br>- Tự động nối và ghi tuần tự vào file đích. | `flow_core::downloader::hls` | 🔄 In-Progress |
+| `HttpDownloadJob.kt`<br>`PartDownloader.kt`<br>`HttpPartDownloader.kt` | `flow_core::downloader::coordinator`<br>`flow_core::downloader::part`<br>`flow_core::downloader::probe`<br>`flow_core::downloader::speed` | - Thăm dò HEAD/GET 0-0 metadata URL.<br>- HTTP 206 Range requests.<br>- Slicing N parts song song & sparse file.<br>- SpeedMeter sliding window & ETA.<br>- Buffer 64KB I/O streaming. | `test_multi_part_download_coordinator`<br>`test_eta_calculation`<br>`test_format_speed`<br>`test_parse_content_disposition` | ✅ Completed |
+| `HLSDownloadJob.kt`<br>`HLSResponseInfo.kt` | `flow_core::downloader::hls` | - Parse M3U8 Master / Media Playlists.<br>- Tải song song các media chunks (.ts, .aac, .fmp4).<br>- Tự động nối và ghi tuần tự vào file đích. | `tests/test_hls_downloader.rs` | ⏳ Pending |
 | `HttpRetryPolicy.kt` | `flow_core::resilience::backoff` | - Exponential backoff: `1s -> 2s -> 4s -> 8s -> 16s -> 30s`.<br>- Jitter và max retry limits.<br>- Xử lý ngắt kết nối mạng tạm thời. | `test_exponential_backoff_calculation` | ✅ Completed |
-| `SparseFile.kt` | `flow_core::storage::sparse` | - Windows API `FSCTL_SET_SPARSE` qua `windows-sys`.<br>- Cấp phát dung lượng đĩa tức thì (instant allocation) không zero-fill. | `flow_core::storage::sparse` | ✅ Completed |
+| `SparseFile.kt` | `flow_core::storage::sparse` | - Windows API `FSCTL_SET_SPARSE` qua `windows-sys`.<br>- Cấp phát dung lượng đĩa tức thì (instant allocation) không zero-fill. | `test_multi_part_download_coordinator` | ✅ Completed |
 | `ChecksumUtil.kt` | `flow_core::checksum` | - Streaming Hash: MD5, SHA-1, SHA-256.<br>- Cập nhật digest song song trong quá trình ghi đĩa. | `test_file_checksum_sha256` | ✅ Completed |
-| `TransactionalFileSaver.kt`<br>`DownloadListFileStorage.kt` | `flow_core::storage::atomic` | - Ghi nguyên tử qua file `.tmp` và rename `std::fs::rename`.<br>- JSON Serialization qua `serde_json`.<br>- Chống hỏng dữ liệu khi crash/mất điện. | `test_atomic_save_and_load` | ✅ Completed |
+| `DestWriter.kt`<br>`SimpleDownloadDestination.kt` | `flow_core::storage::dest_writer` | - Thread-safe multi-part file writer.<br>- Seek offset và flush an toàn. | `test_multi_part_download_coordinator` | ✅ Completed |
 
 ---
 

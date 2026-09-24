@@ -1,354 +1,271 @@
 use crate::downloader::part::{DownloadError, HttpPartDownloader};
+use crate::downloader::probe::UrlProber;
+use crate::downloader::speed::SpeedMeter;
 use crate::storage::sparse::mark_as_sparse_file;
-use crate::types::{DownloadProgressEvent, DownloadStatus, DownloadTask, PartInfo};
-use chrono::Utc;
-use reqwest::header::{ACCEPT_RANGES, CONTENT_DISPOSITION, CONTENT_LENGTH};
+use crate::types::{DownloadProgressEvent, DownloadStatus, PartInfo};
 use reqwest::Client;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::sleep;
 
-/// Thông tin thăm dò trước khi tải
-#[derive(Debug, Clone)]
-pub struct ProbeInfo {
-    pub total_bytes: Option<u64>,
-    pub supports_range: bool,
-    pub suggested_filename: Option<String>,
-}
-
 pub struct HttpDownloadCoordinator {
-    client: Client,
+    pub client: Client,
+    pub thread_count: usize,
 }
 
 impl HttpDownloadCoordinator {
-    pub fn new() -> Self {
+    pub fn new(thread_count: usize) -> Self {
         let client = Client::builder()
-            .pool_max_idle_per_host(16)
+            .pool_max_idle_per_host(20)
             .tcp_nodelay(true)
             .build()
             .unwrap_or_default();
 
-        Self { client }
+        Self {
+            client,
+            thread_count: thread_count.max(1),
+        }
     }
 
-    /// Thăm dò thông tin file từ URL (HEAD request hoặc GET range 0-0)
-    /// Ánh xạ 1:1 từ com.flowspeed.lib.downloader.download.HttpDownloadJob.prepare()
-    pub async fn probe(
+    /// Khởi chạy toàn bộ quy trình tải file đa luồng
+    /// Ánh xạ 1:1 từ com.flowspeed.lib.downloader.downloaditem.http.HttpDownloadJob.resumeWithNewScope
+    pub async fn start_download<F>(
         &self,
-        url: &str,
-        headers: &HashMap<String, String>,
-    ) -> Result<ProbeInfo, DownloadError> {
-        let mut req = self.client.head(url);
-        for (k, v) in headers {
-            req = req.header(k, v);
-        }
+        task_id: String,
+        url: String,
+        headers: HashMap<String, String>,
+        save_path: PathBuf,
+        is_canceled: Arc<AtomicBool>,
+        mut on_progress: F,
+    ) -> Result<PathBuf, DownloadError>
+    where
+        F: FnMut(DownloadProgressEvent) + Send + 'static,
+    {
+        // 1. Thăm dò thông tin file (Probe)
+        let prober = UrlProber::new(self.client.clone());
+        let meta = prober.probe(&url, &headers).await?;
 
-        let resp = match req.send().await {
-            Ok(r) if r.status().is_success() => r,
-            _ => {
-                // Fallback: Thử GET dải 0-0 nếu HEAD bị server từ chối
-                let mut get_req = self.client.get(url).header("Range", "bytes=0-0");
-                for (k, v) in headers {
-                    get_req = get_req.header(k, v);
-                }
-                get_req.send().await?
-            }
+        let total_bytes = meta.content_length;
+        let final_filename = meta
+            .suggested_filename
+            .unwrap_or_else(|| "download_file".to_string());
+
+        let final_path = if save_path.is_dir() {
+            save_path.join(&final_filename)
+        } else {
+            save_path
         };
 
-        let headers_map = resp.headers();
+        // File tạm trong quá trình tải
+        let incomplete_path = final_path.with_extension(format!(
+            "{}.part",
+            final_path
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("tmp")
+        ));
 
-        // 1. Kiểm tra Content-Length
-        let total_bytes = headers_map
-            .get(CONTENT_LENGTH)
-            .and_then(|v| v.to_str().ok())
-            .and_then(|v| v.parse::<u64>().ok());
+        // 2. Chia dải byte (Part Slicing)
+        let threads = if meta.supports_range && total_bytes.is_some() {
+            self.thread_count
+        } else {
+            1
+        };
 
-        // 2. Kiểm tra hỗ trợ dải Range (Accept-Ranges: bytes hoặc status 206)
-        let supports_range = headers_map
-            .get(ACCEPT_RANGES)
-            .and_then(|v| v.to_str().ok())
-            .map(|v| v.eq_ignore_ascii_case("bytes"))
-            .unwrap_or(false)
-            || resp.status().as_u16() == 206;
-
-        // 3. Trích xuất tên file từ Content-Disposition
-        let suggested_filename = headers_map
-            .get(CONTENT_DISPOSITION)
-            .and_then(|v| v.to_str().ok())
-            .and_then(parse_filename_from_disposition);
-
-        Ok(ProbeInfo {
-            total_bytes,
-            supports_range,
-            suggested_filename,
-        })
-    }
-
-    /// Khởi tạo và chia các Part (dải byte) cho tác vụ tải
-    pub fn create_parts(total_bytes: u64, num_parts: usize) -> Vec<PartInfo> {
-        if num_parts <= 1 || total_bytes < num_parts as u64 {
-            return vec![PartInfo {
-                index: 0,
-                start_byte: 0,
-                end_byte: total_bytes.saturating_sub(1),
-                downloaded_bytes: 0,
-                is_completed: false,
-            }];
-        }
-
-        let part_size = total_bytes / num_parts as u64;
-        let mut parts = Vec::with_capacity(num_parts);
-
-        for i in 0..num_parts {
-            let start_byte = i as u64 * part_size;
-            let end_byte = if i == num_parts - 1 {
-                total_bytes - 1
-            } else {
-                start_byte + part_size - 1
-            };
-
-            parts.push(PartInfo {
-                index: i,
-                start_byte,
-                end_byte,
-                downloaded_bytes: 0,
-                is_completed: false,
-            });
-        }
-
-        parts
-    }
-
-    /// Bắt đầu điều phối tiến trình tải đa luồng
-    /// Ánh xạ 1:1 từ com.flowspeed.lib.downloader.download.HttpDownloadJob.start()
-    pub async fn execute_download(
-        &self,
-        task: &mut DownloadTask,
-        num_threads: usize,
-        progress_tx: Option<mpsc::Sender<DownloadProgressEvent>>,
-        is_paused: Arc<AtomicBool>,
-        is_canceled: Arc<AtomicBool>,
-    ) -> Result<(), DownloadError> {
-        let save_path = PathBuf::from(&task.save_path);
-        if let Some(parent) = save_path.parent() {
-            tokio::fs::create_dir_all(parent).await?;
-        }
-
-        // 1. Thăm dò thông tin nếu chưa có total_bytes
-        if task.total_bytes.is_none() {
-            let probe = self.probe(&task.url, &task.headers).await?;
-            task.total_bytes = probe.total_bytes;
-        }
-
-        // 2. Cấp phát Sparse file nếu có dung lượng xác định
-        if let Some(total) = task.total_bytes {
-            let file = File::create(&save_path)?;
-            file.set_len(total)?;
-            let _ = mark_as_sparse_file(&file);
-
-            if task.parts.is_empty() {
-                task.parts = Self::create_parts(total, num_threads);
+        let mut parts = Vec::new();
+        if let Some(total) = total_bytes {
+            let chunk_size = total / threads as u64;
+            for i in 0..threads {
+                let start = i as u64 * chunk_size;
+                let end = if i == threads - 1 {
+                    total - 1
+                } else {
+                    (start + chunk_size) - 1
+                };
+                parts.push(PartInfo {
+                    index: i,
+                    start_byte: start,
+                    end_byte: end,
+                    downloaded_bytes: 0,
+                    is_completed: false,
+                });
             }
-        } else if task.parts.is_empty() {
-            task.parts = vec![PartInfo {
+        } else {
+            // Server không báo trước kích thước file -> 1 part duy nhất
+            parts.push(PartInfo {
                 index: 0,
                 start_byte: 0,
                 end_byte: u64::MAX,
                 downloaded_bytes: 0,
                 is_completed: false,
-            }];
+            });
         }
 
-        let downloaded_counter = Arc::new(AtomicU64::new(task.downloaded_bytes));
+        // 3. Chuẩn bị file và cấp phát Sparse File trên NTFS
+        {
+            let file = File::create(&incomplete_path)?;
+            if let Some(total) = total_bytes {
+                let _ = mark_as_sparse_file(&file);
+                file.set_len(total)?;
+            }
+        }
 
-        // 3. Tiến trình theo dõi tốc độ và phát Event (Speed & Progress Meter)
-        let meter_id = task.id.clone();
-        let meter_total = task.total_bytes;
-        let meter_counter = Arc::clone(&downloaded_counter);
-        let meter_paused = Arc::clone(&is_paused);
-        let meter_canceled = Arc::clone(&is_canceled);
-        let meter_tx = progress_tx.clone();
+        // 4. Điều phối tải song song các parts
+        let downloaded_counter = Arc::new(AtomicU64::new(0));
+        let mut part_handles = Vec::new();
+        let downloader = Arc::new(HttpPartDownloader {
+            client: self.client.clone(),
+        });
 
-        let meter_handle = tokio::spawn(async move {
-            let mut last_bytes = meter_counter.load(Ordering::Relaxed);
-            let mut last_time = Instant::now();
+        for mut part in parts {
+            let dl = downloader.clone();
+            let p_url = url.clone();
+            let p_headers = headers.clone();
+            let p_path = incomplete_path.clone();
+            let p_counter = downloaded_counter.clone();
+            let p_canceled = is_canceled.clone();
 
-            loop {
-                sleep(Duration::from_millis(500)).await;
+            let handle = tokio::spawn(async move {
+                dl.download_part(
+                    &p_url,
+                    &p_headers,
+                    &mut part,
+                    p_path,
+                    p_counter,
+                    p_canceled,
+                )
+                .await
+            });
 
-                if meter_canceled.load(Ordering::Relaxed) || meter_paused.load(Ordering::Relaxed) {
+            part_handles.push(handle);
+        }
+
+        // 5. Luồng đo tốc độ và phát tín hiệu tiến độ thời gian thực
+        let monitor_counter = downloaded_counter.clone();
+        let monitor_canceled = is_canceled.clone();
+        let m_task_id = task_id.clone();
+
+        let (progress_tx, mut progress_rx) = mpsc::channel::<DownloadProgressEvent>(100);
+
+        let progress_task = tokio::spawn(async move {
+            let mut meter = SpeedMeter::new(3);
+            while !monitor_canceled.load(Ordering::Relaxed) {
+                sleep(Duration::from_millis(300)).await;
+                let downloaded = monitor_counter.load(Ordering::Relaxed);
+                meter.update(downloaded);
+
+                let speed = meter.current_speed_bps();
+                let eta = meter.calculate_eta(downloaded, total_bytes);
+
+                let event = DownloadProgressEvent {
+                    id: m_task_id.clone(),
+                    downloaded_bytes: downloaded,
+                    total_bytes,
+                    speed_bps: speed,
+                    eta_seconds: eta,
+                    status: DownloadStatus::Downloading,
+                };
+
+                if progress_tx.send(event).await.is_err() {
                     break;
                 }
 
-                let current_bytes = meter_counter.load(Ordering::Relaxed);
-                let elapsed_secs = last_time.elapsed().as_secs_f64();
-
-                if elapsed_secs > 0.0 {
-                    let bytes_diff = current_bytes.saturating_sub(last_bytes);
-                    let speed_bps = (bytes_diff as f64 / elapsed_secs) as u64;
-
-                    let eta_seconds = if speed_bps > 0 && meter_total.is_some() {
-                        let remaining = meter_total.unwrap().saturating_sub(current_bytes);
-                        Some(remaining / speed_bps)
-                    } else {
-                        None
-                    };
-
-                    if let Some(tx) = &meter_tx {
-                        let _ = tx
-                            .send(DownloadProgressEvent {
-                                id: meter_id.clone(),
-                                downloaded_bytes: current_bytes,
-                                total_bytes: meter_total,
-                                speed_bps,
-                                eta_seconds,
-                                status: DownloadStatus::Downloading,
-                            })
-                            .await;
+                if let Some(total) = total_bytes {
+                    if downloaded >= total {
+                        break;
                     }
-
-                    last_bytes = current_bytes;
-                    last_time = Instant::now();
                 }
             }
         });
 
-        // 4. Spawn các worker tải từng Part song song
-        let mut handles = Vec::new();
-        for part in &mut task.parts {
-            if part.is_completed {
-                continue;
+        // Vòng lặp nhận event tiến độ
+        let event_loop = tokio::spawn(async move {
+            while let Some(evt) = progress_rx.recv().await {
+                on_progress(evt);
             }
+        });
 
-            let mut part_clone = part.clone();
-            let url = task.url.clone();
-            let headers = task.headers.clone();
-            let path = save_path.clone();
-            let counter = Arc::clone(&downloaded_counter);
-            let canceled = Arc::clone(&is_canceled);
-            let client = self.client.clone();
-
-            let handle = tokio::spawn(async move {
-                let downloader = HttpPartDownloader { client };
-                downloader
-                    .download_part(
-                        &url,
-                        &headers,
-                        &mut part_clone,
-                        path,
-                        counter,
-                        canceled,
-                    )
-                    .await
-                    .map(|_| part_clone)
-            });
-
-            handles.push(handle);
-        }
-
-        // 5. Chờ toàn bộ các luồng tải xong
-        let mut has_error = None;
-        for handle in handles {
+        // Chờ toàn bộ các worker parts hoàn thành
+        for handle in part_handles {
             match handle.await {
-                Ok(Ok(updated_part)) => {
-                    if let Some(p) = task.parts.get_mut(updated_part.index) {
-                        *p = updated_part;
-                    }
-                }
-                Ok(Err(e)) => has_error = Some(e),
-                Err(_) => has_error = Some(DownloadError::Canceled),
+                Ok(result) => result?,
+                Err(_) => return Err(DownloadError::Canceled),
             }
         }
 
-        let _ = meter_handle.await;
-        task.downloaded_bytes = downloaded_counter.load(Ordering::Relaxed);
-        task.updated_at = Utc::now();
-
-        if let Some(err) = has_error {
-            task.status = DownloadStatus::Error(err.to_string());
-            return Err(err);
-        }
+        let _ = progress_task.await;
+        let _ = event_loop.await;
 
         if is_canceled.load(Ordering::Relaxed) {
-            task.status = DownloadStatus::Paused;
             return Err(DownloadError::Canceled);
         }
 
-        task.status = DownloadStatus::Completed;
-        if let Some(tx) = &progress_tx {
-            let _ = tx
-                .send(DownloadProgressEvent {
-                    id: task.id.clone(),
-                    downloaded_bytes: task.downloaded_bytes,
-                    total_bytes: task.total_bytes,
-                    speed_bps: 0,
-                    eta_seconds: Some(0),
-                    status: DownloadStatus::Completed,
-                })
-                .await;
-        }
+        // 6. Hoàn tất tải: Đổi tên file từ .part sang tên chính thức
+        std::fs::rename(&incomplete_path, &final_path)?;
 
-        Ok(())
+        Ok(final_path)
     }
-}
-
-fn parse_filename_from_disposition(header_val: &str) -> Option<String> {
-    for part in header_val.split(';') {
-        let part = part.trim();
-        if part.starts_with("filename*=") {
-            if let Some(name) = part.strip_prefix("filename*=") {
-                let clean = name.trim_matches('"').trim();
-                if let Some(idx) = clean.find("''") {
-                    return Some(clean[idx + 2..].to_string());
-                }
-                return Some(clean.to_string());
-            }
-        } else if part.starts_with("filename=") {
-            if let Some(name) = part.strip_prefix("filename=") {
-                return Some(name.trim_matches('"').trim().to_string());
-            }
-        }
-    }
-    None
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::tempdir;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    #[test]
-    fn test_create_parts_slicing() {
-        let total_bytes = 1000;
-        let parts = HttpDownloadCoordinator::create_parts(total_bytes, 4);
+    #[tokio::test]
+    async fn test_multi_part_download_coordinator() {
+        let server = MockServer::start().await;
 
-        assert_eq!(parts.len(), 4);
-        assert_eq!(parts[0].start_byte, 0);
-        assert_eq!(parts[0].end_byte, 249);
-        assert_eq!(parts[1].start_byte, 250);
-        assert_eq!(parts[1].end_byte, 499);
-        assert_eq!(parts[2].start_byte, 500);
-        assert_eq!(parts[2].end_byte, 749);
-        assert_eq!(parts[3].start_byte, 750);
-        assert_eq!(parts[3].end_byte, 999);
-    }
+        let payload = "Flow Speed Link Multi-part High Speed Engine Content";
+        let length = payload.len() as u64;
 
-    #[test]
-    fn test_parse_filename_from_content_disposition() {
-        let val = r#"attachment; filename="ubuntu-24.04.iso""#;
-        assert_eq!(
-            parse_filename_from_disposition(val),
-            Some("ubuntu-24.04.iso".to_string())
-        );
+        // Mock HEAD request
+        Mock::given(method("HEAD"))
+            .and(path("/file.dat"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .insert_header("content-length", length.to_string())
+                    .insert_header("accept-ranges", "bytes"),
+            )
+            .mount(&server)
+            .await;
 
-        let val_utf8 = "attachment; filename*=UTF-8''my%20archive.zip";
-        assert_eq!(
-            parse_filename_from_disposition(val_utf8),
-            Some("my%20archive.zip".to_string())
-        );
+        // Mock GET range request
+        Mock::given(method("GET"))
+            .and(path("/file.dat"))
+            .respond_with(
+                ResponseTemplate::new(206)
+                    .set_body_bytes(payload.as_bytes())
+                    .insert_header("content-length", length.to_string()),
+            )
+            .mount(&server)
+            .await;
+
+        let dir = tempdir().unwrap();
+        let target_file = dir.path().join("file.dat");
+
+        let coordinator = HttpDownloadCoordinator::new(2);
+        let canceled = Arc::new(AtomicBool::new(false));
+
+        let result = coordinator
+            .start_download(
+                "task-1".to_string(),
+                format!("{}/file.dat", server.uri()),
+                HashMap::new(),
+                target_file.clone(),
+                canceled,
+                |_progress| {},
+            )
+            .await;
+
+        assert!(result.is_ok());
+        assert!(target_file.exists());
     }
 }

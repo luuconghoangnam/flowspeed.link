@@ -17,10 +17,10 @@
 - [x] Module `flow_core::checksum` (Streaming MD5, SHA-1, SHA-256).
 - [x] Module `flow_core::storage::sparse` (Windows NTFS `FSCTL_SET_SPARSE`).
 - [x] Module `flow_core::storage::atomic` (Atomic file JSON storage).
-- [x] Module `flow_core::downloader::coordinator` (HTTP Range, Multi-part downloader, Dynamic split, Real-time Speed/ETA).
+- [x] Module `flow_core::downloader::range` (`HttpDownloadCoordinator`, `HttpPartDownloader`, `UrlProber`, `SpeedMeter`).
 - [ ] Module `flow_core::downloader::hls` (M3U8 Parser & Parallel TS downloader).
 - [ ] Module `flow_core::queue::manager` (Actor-based Concurrency Manager & Scheduler).
-- [x] Unit Test Suite (`cargo test -p flow_core` pass 100%).
+- [x] Unit Test Suite (`cargo test` 8/8 pass 100%).
 
 ### Giai đoạn 2: Integration Server & IPC (`crates/flow_server`)
 - [ ] Module `flow_server::routes` (Axum REST API port 15151: `/add`, `/queues`, `/start-headless-download`).
