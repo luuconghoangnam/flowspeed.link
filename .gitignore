@@ -19,3 +19,6 @@ jdk17/
 jdk21/
 jdk17.zip
 jdk21.zip
+
+# Antigravity Skills Hub Backup
+.agents_backup_*

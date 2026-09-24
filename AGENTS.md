@@ -1,43 +1,26 @@
-<!-- gitnexus:start -->
-# GitNexus — Code Intelligence
+# Agent Routing Index
 
-This project is indexed by GitNexus as **flowspeed** (13859 symbols, 47710 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+> Agent doc file nay dau tien de biet minh co vu khi gi.
+> Chi doc SKILL.md tuong ung khi task thuc su can den skill do â€” tiet kiem token toi da.
 
-> If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
+## Core Rules (Always Active)
 
-## Always Do
+- `.agents/rules/01-core-philosophy.md` â€” Triet ly code: KISS, YAGNI, Surgical, Goal-Driven
+- `.agents/rules/02-security-baseline.md` â€” Baseline bao mat toi thieu cho moi project
 
-- **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
-- **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
-- When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
-- When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
+---
 
-## Never Do
+## Skills (Load khi can â€” On-Demand)
 
-- NEVER edit a function, class, or method without first running `gitnexus_impact` on it.
-- NEVER ignore HIGH or CRITICAL risk warnings from impact analysis.
-- NEVER rename symbols with find-and-replace — use `gitnexus_rename` which understands the call graph.
-- NEVER commit changes without running `gitnexus_detect_changes()` to check affected scope.
-
-## Resources
-
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/flowspeed/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/flowspeed/clusters` | All functional areas |
-| `gitnexus://repo/flowspeed/processes` | All execution flows |
-| `gitnexus://repo/flowspeed/process/{name}` | Step-by-step execution trace |
-
-## CLI
-
-| Task | Read this skill file |
-|------|---------------------|
-| Understand architecture / "How does X work?" | `.claude/skills/gitnexus/gitnexus-exploring/SKILL.md` |
-| Blast radius / "What breaks if I change X?" | `.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md` |
-| Trace bugs / "Why is X failing?" | `.claude/skills/gitnexus/gitnexus-debugging/SKILL.md` |
-| Rename / extract / split / refactor | `.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md` |
-| Tools, resources, schema reference | `.claude/skills/gitnexus/gitnexus-guide/SKILL.md` |
-| Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
-
-<!-- gitnexus:end -->
+| Skill ID | Kich hoat khi... | File |
+|----------|-----------------|------|| `spec-brainstormer` | Khai thac intent, lam ro spec, phan loai Spike/Bounded/Architecture | `.agents/skills/spec-brainstormer/SKILL.md` |
+| `subagent-orchestrator` | Dieu phoi multi-agent, chay task doc lap, continuous execution | `.agents/skills/subagent-orchestrator/SKILL.md` |
+| `systematic-debugging` | Go loi logic phuc tap, crash, memory leak theo First-Principles | `.agents/skills/systematic-debugging/SKILL.md` |
+| `unit-testing-tdd` | Viet Unit test & Integration test theo chuan TDD | `.agents/skills/unit-testing-tdd/SKILL.md` |
+| `adversarial-review` | Peer code review phan bien, ra soat regression, edge cases, bao mat | `.agents/skills/adversarial-review/SKILL.md` |
+| `engineering-workflows` | Refactoring phuc tap, API design, database migration | `.agents/skills/engineering-workflows/SKILL.md` |
+| `deep-skill-search` | Can skill rat dac thu khong co trong hub nay | `.agents/skills/deep-skill-search/SKILL.md` |
+| `database-mastery` | Toi uu SQL Query, Indexing, Locking, Redis Caching | `.agents/skills/database-mastery/SKILL.md` |
+| `security-auditor` | Review bao mat, kiem tra OWASP, pentest, phan tich lo hong | `.agents/skills/security-auditor/SKILL.md` |
+| `diagram-designer` | Ve kien truc, workflow, sequence, ERD, C4, HTML+SVG | `.agents/skills/diagram-designer/SKILL.md` |
+| `framework-standards` | Code theo dung convention cua framework (Next.js, NestJS...) | `.agents/skills/framework-standards/SKILL.md` |
