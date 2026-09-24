@@ -43,12 +43,12 @@
 
 | Màn hình / Component Kotlin | Component Tauri v2 (Svelte/Vue + Tailwind) | Chức năng chi tiết | Trạng thái |
 | :--- | :--- | :--- | :---: |
-| `HomeScreen.kt` | `src/App.svelte` | Danh sách tải file, filter (All, Downloading, Completed, Error), thanh tốc độ tổng, tiến trình gradient mượt. | ✅ Completed |
-| `AddDownloadDialog.kt` | `src/App.svelte` (Add Modal) | Dán URL, tùy chỉnh số threads tải đa luồng, link test mẫu, gọi invoke `start_download`. | ✅ Completed |
-| `BatchDownloadDialog.kt` | `src/components/BatchDownloadModal.svelte` | Nhập nhiều URL theo mẫu hoặc pattern dải số. | ⏳ Pending |
+| `HomeScreen.kt` | `src/App.svelte` | Danh sách tải file, filter (All, Downloading, Completed, Error), thanh tốc độ tổng, tiến trình gradient mượt, mở thư mục File Explorer. | ✅ Completed |
+| `AddDownloadDialog.kt` | `src/App.svelte` (Add Modal) | Dán URL, tùy chỉnh số threads tải đa luồng, link test mẫu Cloudflare/GitHub, gọi invoke `start_download`. | ✅ Completed |
+| `BatchDownloadDialog.kt` | `src/components/BatchDownloadModal.svelte` | Nhập nhiều URL theo danh sách dòng, tùy chỉnh số luồng và thêm đồng loạt. | ✅ Completed |
 | `QueueManagerDialog.kt` | `src/components/QueueManagerModal.svelte` | Cấu hình queue, lập lịch giờ chạy, giới hạn tốc độ từng queue. | ⏳ Pending |
-| `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm file tải về với mã hash mong muốn. | ⏳ Pending |
-| `SettingsScreen.kt` | `src/views/SettingsView.svelte` | Cài đặt folder mặc định, dark/light theme, proxy, autostart, port integration. | ⏳ Pending |
+| `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm SHA-256 / SHA-1 / MD5 file tải về với mã hash mong muốn. | ✅ Completed |
+| `SettingsScreen.kt` | `src/components/SettingsModal.svelte` | Cài đặt folder mặc định, threads, max concurrent, autostart, port REST API (15151), lưu nguyên tử Atomic JSON. | ✅ Completed |
 | `SystemTray.kt` | Tauri System Tray API | Menu tray: Mở app, Pause All, Resume All, Thoát. | ⏳ Pending |
 
 ---

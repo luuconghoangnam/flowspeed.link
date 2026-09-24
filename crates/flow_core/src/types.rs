@@ -58,3 +58,35 @@ pub struct DownloadProgressEvent {
     pub eta_seconds: Option<u64>,
     pub status: DownloadStatus,
 }
+
+/// Cấu hình toàn cục của ứng dụng (Settings & Preferences)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppSettings {
+    pub download_dir: String,
+    pub default_threads: usize,
+    pub max_concurrent_downloads: usize,
+    pub auto_start: bool,
+    pub server_port: u16,
+    pub speed_limit_kbps: Option<u64>,
+    pub notification_enabled: bool,
+}
+
+impl Default for AppSettings {
+    fn default() -> Self {
+        let download_dir = dirs::download_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+            .to_string_lossy()
+            .to_string();
+
+        Self {
+            download_dir,
+            default_threads: 8,
+            max_concurrent_downloads: 3,
+            auto_start: false,
+            server_port: 15151,
+            speed_limit_kbps: None,
+            notification_enabled: true,
+        }
+    }
+}
+

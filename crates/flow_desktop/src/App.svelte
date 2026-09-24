@@ -6,20 +6,25 @@
     Settings,
     ListOrdered,
     CheckCircle2,
-    Pause,
     Trash2,
     X,
     FolderOpen,
     AlertCircle,
     Zap,
+    ShieldCheck,
+    ListPlus,
   } from "lucide-svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
+  import SettingsModal from "./components/SettingsModal.svelte";
+  import ChecksumModal from "./components/ChecksumModal.svelte";
+  import BatchDownloadModal from "./components/BatchDownloadModal.svelte";
 
   interface DownloadItem {
     id: string;
     url: string;
     name: string;
+    filePath?: string;
     sizeFormatted: string;
     totalBytes: number | null;
     downloadedBytes: number;
@@ -32,6 +37,12 @@
 
   let activeTab: "all" | "downloading" | "completed" = "all";
   let showAddModal = false;
+  let showSettingsModal = false;
+  let showChecksumModal = false;
+  let showBatchModal = false;
+
+  let selectedChecksumFile = { path: "", name: "" };
+
   let inputUrl = "";
   let threadCount = 8;
   let isSubmitting = false;
@@ -85,6 +96,7 @@
       const idx = downloads.findIndex((d) => d.id === payload.id);
       if (idx !== -1) {
         downloads[idx].status = "completed";
+        downloads[idx].filePath = payload.path;
         downloads[idx].progress = 100;
         downloads[idx].speedFormatted = "0 B/s";
         downloads[idx].etaFormatted = "Hoàn tất";
@@ -151,6 +163,26 @@
     } finally {
       isSubmitting = false;
     }
+  }
+
+  // Mở file trong File Explorer
+  async function handleOpenFileInExplorer(filePath?: string) {
+    if (!filePath) return;
+    try {
+      await invoke("open_in_folder", { path: filePath });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // Mở modal tính checksum
+  function handleOpenChecksum(item: DownloadItem) {
+    if (!item.filePath) return;
+    selectedChecksumFile = {
+      path: item.filePath,
+      name: item.name,
+    };
+    showChecksumModal = true;
   }
 
   // Hủy tải
@@ -250,7 +282,10 @@
         </div>
       </div>
 
-      <button class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-all">
+      <button
+        on:click={() => (showSettingsModal = true)}
+        class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition-all cursor-pointer"
+      >
         <Settings class="h-4 w-4" />
         <span>Cài đặt</span>
       </button>
@@ -261,13 +296,21 @@
   <main class="flex-1 flex flex-col overflow-hidden">
     <!-- Top Header -->
     <header class="h-16 border-b border-slate-800/80 px-6 flex items-center justify-between bg-slate-900/40 backdrop-blur-md">
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3">
         <button
           on:click={() => (showAddModal = true)}
           class="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white rounded-lg text-sm font-semibold shadow-md shadow-indigo-600/30 transition-all active:scale-95"
         >
           <Plus class="h-4 w-4" />
           <span>Thêm đường dẫn URL</span>
+        </button>
+
+        <button
+          on:click={() => (showBatchModal = true)}
+          class="flex items-center space-x-2 px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 text-slate-300 rounded-lg text-xs font-medium transition-all"
+        >
+          <ListPlus class="h-4 w-4 text-cyan-400" />
+          <span>Tải hàng loạt</span>
         </button>
       </div>
 
@@ -301,7 +344,23 @@
               {/if}
             </div>
 
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1.5">
+              {#if item.status === "completed" && item.filePath}
+                <button
+                  on:click={() => handleOpenChecksum(item)}
+                  title="Kiểm tra mã băm SHA-256 / MD5"
+                  class="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-slate-800 transition-colors"
+                >
+                  <ShieldCheck class="h-4 w-4" />
+                </button>
+                <button
+                  on:click={() => handleOpenFileInExplorer(item.filePath)}
+                  title="Mở thư mục chứa file"
+                  class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition-colors"
+                >
+                  <FolderOpen class="h-4 w-4" />
+                </button>
+              {/if}
               <button
                 on:click={() => handleCancel(item.id)}
                 title="Hủy & Xóa"
@@ -371,7 +430,7 @@
               <div class="flex space-x-2">
                 <button type="button" on:click={() => setTestUrl('small')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-indigo-300 hover:bg-slate-700">README (3KB)</button>
                 <button type="button" on:click={() => setTestUrl('10mb')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-cyan-300 hover:bg-slate-700">10MB File</button>
-                <button type="button" on:click={() => setTestUrl('100mb')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-emerald-300 hover:bg-slate-700">100MB File</button>
+                <button type="button" on:click={() => setTestUrl('100mb')} class="text-xs px-2 py-0.5 rounded bg-slate-800 text-emerald-300 hover:bg-slate-700">50MB File</button>
               </div>
             </div>
           </div>
@@ -408,4 +467,13 @@
       </div>
     </div>
   {/if}
+
+  <!-- Modals -->
+  <SettingsModal bind:show={showSettingsModal} />
+  <ChecksumModal
+    bind:show={showChecksumModal}
+    filePath={selectedChecksumFile.path}
+    fileName={selectedChecksumFile.name}
+  />
+  <BatchDownloadModal bind:show={showBatchModal} />
 </div>
