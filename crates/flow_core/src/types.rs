@@ -197,13 +197,41 @@ pub struct PowerActionConfig {
 /// Cấu hình toàn cục của ứng dụng (Settings & Preferences)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
+    // 1. Tải về & Mạng (Downloader & Network)
     pub download_dir: String,
     pub default_threads: usize,
     pub max_concurrent_downloads: usize,
-    pub auto_start: bool,
-    pub server_port: u16,
+    pub max_retry_count: usize,
+    pub dynamic_part_creation: bool,
+    pub use_sparse_file_allocation: bool,
+    pub ignore_ssl_certificates: bool,
+    pub delete_partial_on_cancel: bool,
+    pub append_extension_to_incomplete: bool,
+    pub user_agent: String,
+
+    // 2. Băng thông & Tốc độ (Speed & Units)
     pub speed_limit_kbps: Option<u64>,
+    pub use_average_speed: bool,
+    pub size_unit: String,
+    pub speed_unit: String,
+
+    // 3. Giao diện & Hiển thị (Appearance & UI)
+    pub theme: String,
+    pub language: String,
+    pub ui_scale: f32,
+    pub use_relative_datetime: bool,
+    pub use_system_tray: bool,
+
+    // 4. Thông báo & Âm thanh (Notifications & Sounds)
     pub notification_enabled: bool,
+    pub notification_sound: bool,
+
+    // 5. Tích hợp & Hệ thống (Integration & System)
+    pub auto_start: bool,
+    pub browser_integration_enabled: bool,
+    pub server_port: u16,
+
+    // 6. Quy tắc, Danh mục & Hành động nguồn
     pub categories: Vec<FileCategory>,
     pub per_host_rules: Vec<PerHostRule>,
     pub power_action: Option<PowerActionConfig>,
@@ -220,15 +248,38 @@ impl Default for AppSettings {
             download_dir,
             default_threads: 8,
             max_concurrent_downloads: 3,
-            auto_start: false,
-            server_port: 15151,
+            max_retry_count: 3,
+            dynamic_part_creation: true,
+            use_sparse_file_allocation: true,
+            ignore_ssl_certificates: false,
+            delete_partial_on_cancel: false,
+            append_extension_to_incomplete: false,
+            user_agent: "".to_string(),
+
             speed_limit_kbps: None,
+            use_average_speed: true,
+            size_unit: "binary".to_string(),
+            speed_unit: "bytes".to_string(),
+
+            theme: "dark".to_string(),
+            language: "vi".to_string(),
+            ui_scale: 1.0,
+            use_relative_datetime: true,
+            use_system_tray: true,
+
             notification_enabled: true,
+            notification_sound: true,
+
+            auto_start: false,
+            browser_integration_enabled: true,
+            server_port: 15151,
+
             categories: FileCategory::default_categories(),
             per_host_rules: vec![],
             power_action: None,
         }
     }
 }
+
 
 
