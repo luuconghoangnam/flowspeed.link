@@ -2,8 +2,7 @@ use flow_core::checksum::{ChecksumAlgorithm, ChecksumUtil};
 use flow_core::downloader::HttpDownloadCoordinator;
 use flow_core::queue::manager::QueueManager;
 use flow_core::storage::AtomicJsonStorage;
-use flow_core::types::{AppSettings, DownloadTask, FileCategory};
-use flow_server::create_router;
+use flow_core::types::AppSettings;
 use flow_server::routes::AppState;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -279,15 +278,12 @@ pub fn run() {
             let server_state = Arc::new(AppState {
                 queue_manager: queue_mgr.clone(),
             });
-            let server_router = create_router(server_state);
             let addr = SocketAddr::from(([127, 0, 0, 1], 15151));
 
             tauri::async_runtime::spawn(async move {
-                if let Ok(listener) = tokio::net::TcpListener::bind(addr).await {
-                    eprintln!("[FLOW_SERVER] Embedded Extension Server listening on http://{}", addr);
-                    let _ = axum::serve(listener, server_router).await;
-                } else {
-                    eprintln!("[FLOW_SERVER] Port 15151 is already in use or cannot bind.");
+                eprintln!("[FLOW_SERVER] Embedded Extension Server starting on http://{}", addr);
+                if let Err(e) = flow_server::run_server(addr, server_state).await {
+                    eprintln!("[FLOW_SERVER] Embedded server error: {:?}", e);
                 }
             });
 
