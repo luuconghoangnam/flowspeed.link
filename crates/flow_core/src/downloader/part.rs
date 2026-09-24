@@ -30,7 +30,11 @@ impl HttpPartDownloader {
         let client = Client::builder()
             .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .pool_max_idle_per_host(10)
+            .pool_idle_timeout(std::time::Duration::from_secs(90))
+            .tcp_keepalive(std::time::Duration::from_secs(15))
             .tcp_nodelay(true)
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .timeout(std::time::Duration::from_secs(30))
             .build()
             .unwrap_or_default();
         Self { client }

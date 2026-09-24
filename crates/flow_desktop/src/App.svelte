@@ -112,6 +112,11 @@
         downloads[idx].progress = 100;
         downloads[idx].speedFormatted = "0 B/s";
         downloads[idx].etaFormatted = "Hoàn tất";
+        if (downloads[idx].totalBytes && downloads[idx].totalBytes > 0) {
+          downloads[idx].sizeFormatted = formatBytes(downloads[idx].totalBytes);
+        } else if (downloads[idx].downloadedBytes && downloads[idx].downloadedBytes > 0) {
+          downloads[idx].sizeFormatted = formatBytes(downloads[idx].downloadedBytes);
+        }
         downloads = [...downloads];
       }
     });

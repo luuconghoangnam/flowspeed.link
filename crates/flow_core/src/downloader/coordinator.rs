@@ -23,7 +23,11 @@ impl HttpDownloadCoordinator {
         let client = Client::builder()
             .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .pool_max_idle_per_host(20)
+            .pool_idle_timeout(Duration::from_secs(90))
+            .tcp_keepalive(Duration::from_secs(15))
             .tcp_nodelay(true)
+            .connect_timeout(Duration::from_secs(10))
+            .timeout(Duration::from_secs(30))
             .build()
             .unwrap_or_default();
 
@@ -72,8 +76,12 @@ impl HttpDownloadCoordinator {
         ));
 
         // 2. Chia dải byte (Part Slicing)
+        // File nhỏ < 512KB chỉ mở 1 luồng để tối ưu latency & tránh bị rate limit bởi CDN
+        const MIN_CHUNK_SIZE: u64 = 512 * 1024;
         let threads = if meta.supports_range && total_bytes.is_some() {
-            self.thread_count
+            let total = total_bytes.unwrap();
+            let calculated = (total / MIN_CHUNK_SIZE) as usize;
+            self.thread_count.min(calculated.max(1))
         } else {
             1
         };
@@ -155,8 +163,20 @@ impl HttpDownloadCoordinator {
 
         let progress_task = tokio::spawn(async move {
             let mut meter = SpeedMeter::new(3);
+
+            // Bắn ngay event đầu tiên để UI cập nhật tổng dung lượng và trạng thái tải
+            let init_evt = DownloadProgressEvent {
+                id: m_task_id.clone(),
+                downloaded_bytes: monitor_counter.load(Ordering::Relaxed),
+                total_bytes,
+                speed_bps: 0,
+                eta_seconds: None,
+                status: DownloadStatus::Downloading,
+            };
+            let _ = progress_tx.send(init_evt).await;
+
             while !monitor_canceled.load(Ordering::Relaxed) {
-                sleep(Duration::from_millis(300)).await;
+                sleep(Duration::from_millis(200)).await;
                 let downloaded = monitor_counter.load(Ordering::Relaxed);
                 meter.update(downloaded);
 
@@ -206,7 +226,10 @@ impl HttpDownloadCoordinator {
             return Err(DownloadError::Canceled);
         }
 
-        // 6. Hoàn tất tải: Đổi tên file từ .part sang tên chính thức
+        // 6. Hoàn tất tải: Xóa file đích cũ nếu tồn tại và đổi tên từ .part sang tên chính thức
+        if final_path.exists() {
+            let _ = std::fs::remove_file(&final_path);
+        }
         std::fs::rename(&incomplete_path, &final_path)?;
 
         Ok(final_path)

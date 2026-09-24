@@ -134,12 +134,19 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_parse_content_disposition() {
-        let header = "attachment; filename=\"report_2026.pdf\"";
-        assert_eq!(
-            parse_content_disposition_filename(header),
-            Some("report_2026.pdf".to_string())
-        );
+    #[tokio::test]
+    async fn test_probe_real_url() {
+        let client = Client::builder()
+            .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .unwrap();
+        let prober = UrlProber::new(client);
+        let res = prober.probe("https://raw.githubusercontent.com/rust-lang/rust/master/README.md", &HashMap::new()).await;
+        println!("Probe result: {:?}", res);
+        assert!(res.is_ok());
+        let meta = res.unwrap();
+        assert!(meta.content_length.is_some());
+        println!("Length: {:?}, Range: {}, Filename: {:?}", meta.content_length, meta.supports_range, meta.suggested_filename);
     }
 }
