@@ -63,6 +63,7 @@ async fn start_download(
     tokio::spawn(async move {
         let app_handle_for_events = t_app.clone();
         let task_id_for_finish = t_id.clone();
+        eprintln!("[FLOW_DESKTOP] Starting download task {} for URL: {}", task_id_for_finish, t_url);
 
         let result = coordinator
             .start_download(
@@ -72,13 +73,15 @@ async fn start_download(
                 target_dir,
                 t_cancel,
                 move |event| {
-                    let _ = app_handle_for_events.emit("download-progress", event);
+                    eprintln!("[FLOW_DESKTOP PROGRESS] id={}, downloaded={:?}/{}", event.id, event.downloaded_bytes, event.total_bytes.unwrap_or(0));
+                    let _ = app_handle_for_events.emit("download-progress", &event);
                 },
             )
             .await;
 
         match result {
             Ok(final_path) => {
+                eprintln!("[FLOW_DESKTOP COMPLETED] id={}, path={:?}", task_id_for_finish, final_path);
                 let _ = t_app.emit(
                     "download-completed",
                     serde_json::json!({
@@ -88,6 +91,7 @@ async fn start_download(
                 );
             }
             Err(e) => {
+                eprintln!("[FLOW_DESKTOP ERROR] id={}, error={:?}", task_id_for_finish, e);
                 let _ = t_app.emit(
                     "download-error",
                     serde_json::json!({
