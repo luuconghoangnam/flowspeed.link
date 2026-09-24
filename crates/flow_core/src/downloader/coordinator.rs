@@ -21,6 +21,7 @@ pub struct HttpDownloadCoordinator {
 impl HttpDownloadCoordinator {
     pub fn new(thread_count: usize) -> Self {
         let client = Client::builder()
+            .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .pool_max_idle_per_host(20)
             .tcp_nodelay(true)
             .build()
