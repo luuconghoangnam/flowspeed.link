@@ -14,6 +14,9 @@
     ShieldCheck,
     ListPlus,
     Layers,
+    FolderTree,
+    Globe,
+    Power,
   } from "lucide-svelte";
   import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
@@ -21,6 +24,9 @@
   import ChecksumModal from "./components/ChecksumModal.svelte";
   import BatchDownloadModal from "./components/BatchDownloadModal.svelte";
   import QueueManagerModal from "./components/QueueManagerModal.svelte";
+  import CategoryModal from "./components/CategoryModal.svelte";
+  import PerHostModal from "./components/PerHostModal.svelte";
+  import PowerActionModal from "./components/PowerActionModal.svelte";
 
   interface DownloadItem {
     id: string;
@@ -43,6 +49,10 @@
   let showChecksumModal = false;
   let showBatchModal = false;
   let showQueueModal = false;
+  let showCategoryModal = false;
+  let showPerHostModal = false;
+  let showPowerActionModal = false;
+  let showPowerAlert = false;
 
   let selectedChecksumFile = { path: "", name: "" };
 
@@ -51,6 +61,7 @@
   let isSubmitting = false;
 
   let downloads: DownloadItem[] = [];
+
 
   // Tính tổng tốc độ thời gian thực
   $: totalSpeed = downloads
@@ -321,7 +332,31 @@
           class="flex items-center space-x-2 px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 text-slate-300 rounded-lg text-xs font-medium transition-all"
         >
           <Layers class="h-4 w-4 text-indigo-400" />
-          <span>Hàng đợi tải</span>
+          <span>Hàng đợi</span>
+        </button>
+
+        <button
+          on:click={() => (showCategoryModal = true)}
+          class="flex items-center space-x-2 px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 text-slate-300 rounded-lg text-xs font-medium transition-all"
+        >
+          <FolderTree class="h-4 w-4 text-purple-400" />
+          <span>Danh mục</span>
+        </button>
+
+        <button
+          on:click={() => (showPerHostModal = true)}
+          class="flex items-center space-x-2 px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 text-slate-300 rounded-lg text-xs font-medium transition-all"
+        >
+          <Globe class="h-4 w-4 text-cyan-400" />
+          <span>Quy tắc Host</span>
+        </button>
+
+        <button
+          on:click={() => (showPowerActionModal = true)}
+          class="flex items-center space-x-2 px-3.5 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-700/60 text-slate-300 rounded-lg text-xs font-medium transition-all"
+        >
+          <Power class="h-4 w-4 text-amber-400" />
+          <span>Tự động Tắt máy</span>
         </button>
       </div>
 
@@ -488,4 +523,13 @@
   />
   <BatchDownloadModal bind:show={showBatchModal} />
   <QueueManagerModal bind:show={showQueueModal} />
+  <CategoryModal isOpen={showCategoryModal} onClose={() => (showCategoryModal = false)} />
+  <PerHostModal isOpen={showPerHostModal} onClose={() => (showPerHostModal = false)} />
+  <PowerActionModal
+    isOpen={showPowerActionModal}
+    isAlertOpen={showPowerAlert}
+    onClose={() => (showPowerActionModal = false)}
+    onCancelAlert={() => (showPowerAlert = false)}
+  />
 </div>
+

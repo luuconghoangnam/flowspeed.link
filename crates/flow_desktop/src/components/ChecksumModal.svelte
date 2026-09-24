@@ -89,7 +89,7 @@
               <button
                 type="button"
                 on:click={() => {
-                  selectedAlgo = algo as any;
+                  selectedAlgo = algo === "sha1" ? "sha1" : algo === "md5" ? "md5" : "sha256";
                   calculateHash();
                 }}
                 class="py-2 px-3 rounded-xl border text-xs font-mono font-semibold transition-all {selectedAlgo === algo

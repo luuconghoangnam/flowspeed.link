@@ -49,7 +49,12 @@
 | `QueueManagerDialog.kt` | `src/components/QueueManagerModal.svelte` | Cấu hình queue, lập lịch giờ chạy, giới hạn tốc độ từng queue. | ✅ Completed |
 | `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm SHA-256 / SHA-1 / MD5 file tải về với mã hash mong muốn. | ✅ Completed |
 | `SettingsScreen.kt` | `src/components/SettingsModal.svelte` | Cài đặt folder mặc định, threads, max concurrent, autostart, port REST API (15151), lưu nguyên tử Atomic JSON. | ✅ Completed |
-| `SystemTray.kt` | Tauri System Tray API | Menu tray: Mở app, Pause All, Resume All, Thoát. | ⏳ Pending |
+| `Category.kt`<br>`NewCategoryPage.kt` | `src/components/CategoryModal.svelte`<br>`flow_core::types::FileCategory` | Phân loại tệp tin tự động (Video, Audio, Compressed, Documents, Programs) theo đuôi file & tự định tuyến folder đích. | ✅ Completed |
+| `PerHostSettingsPage.kt` | `src/components/PerHostModal.svelte`<br>`flow_core::types::PerHostRule` | Thiết lập số luồng tối đa, custom header/cookies/proxy theo từng tên miền máy chủ. | ✅ Completed |
+| `PowerActionAlertWindow.kt`<br>`PowerAction.kt` | `src/components/PowerActionModal.svelte`<br>`flow_core::types::PowerActionConfig` | Tự động Tắt máy (Shutdown), Ngủ (Sleep), Ngủ đông (Hibernate) kèm bộ đếm ngược 30s khi hoàn tất tải. | ✅ Completed |
+| `SystemTray.kt` | `crates/flow_desktop/src-tauri/src/lib.rs` (TrayIconBuilder) | Menu tray: Mở app, Ẩn khay, Thoát + Thông báo Native Windows Toast khi tải xong. | ✅ Completed |
+| `SingleInstanceServer.kt` | `crates/flow_desktop/src-tauri/src/lib.rs` | Nhúng Axum Extension Server (cổng 15151) chạy nền trong runtime Tokio của Desktop app. | ✅ Completed |
+
 
 ---
 

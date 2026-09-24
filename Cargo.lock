@@ -1200,6 +1200,7 @@ version = "0.1.0"
 dependencies = [
  "dirs 6.0.0",
  "flow_core",
+ "flow_server",
  "serde",
  "serde_json",
  "tauri",
