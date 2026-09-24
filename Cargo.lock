@@ -1197,6 +1197,7 @@ dependencies = [
 name = "flow_desktop"
 version = "0.1.0"
 dependencies = [
+ "dirs 6.0.0",
  "flow_core",
  "serde",
  "serde_json",
@@ -1207,6 +1208,7 @@ dependencies = [
  "tauri-plugin-notification",
  "tauri-plugin-shell",
  "tokio",
+ "uuid",
 ]
 
 [[package]]

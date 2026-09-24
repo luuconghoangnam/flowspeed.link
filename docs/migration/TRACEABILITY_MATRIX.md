@@ -43,8 +43,8 @@
 
 | Màn hình / Component Kotlin | Component Tauri v2 (Svelte/Vue + Tailwind) | Chức năng chi tiết | Trạng thái |
 | :--- | :--- | :--- | :---: |
-| `HomeScreen.kt` | `src/views/HomeView.svelte` | Danh sách tải file, filter (All, Downloading, Completed, Error), thanh tốc độ tổng. | ⏳ Pending |
-| `AddDownloadDialog.kt` | `src/components/AddDownloadModal.svelte` | Dán URL, tự bắt clipboard, chọn folder, chọn queue, chỉnh số thread. | ⏳ Pending |
+| `HomeScreen.kt` | `src/App.svelte` | Danh sách tải file, filter (All, Downloading, Completed, Error), thanh tốc độ tổng, tiến trình gradient mượt. | ✅ Completed |
+| `AddDownloadDialog.kt` | `src/App.svelte` (Add Modal) | Dán URL, tùy chỉnh số threads tải đa luồng, link test mẫu, gọi invoke `start_download`. | ✅ Completed |
 | `BatchDownloadDialog.kt` | `src/components/BatchDownloadModal.svelte` | Nhập nhiều URL theo mẫu hoặc pattern dải số. | ⏳ Pending |
 | `QueueManagerDialog.kt` | `src/components/QueueManagerModal.svelte` | Cấu hình queue, lập lịch giờ chạy, giới hạn tốc độ từng queue. | ⏳ Pending |
 | `ChecksumDialog.kt` | `src/components/ChecksumModal.svelte` | So khớp mã băm file tải về với mã hash mong muốn. | ⏳ Pending |

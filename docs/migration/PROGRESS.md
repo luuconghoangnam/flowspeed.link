@@ -28,10 +28,10 @@
 - [ ] CORS & Browser Extension Integration Test.
 
 ### Giai đoạn 3: Tauri v2 Desktop GUI (`crates/flow_desktop`)
-- [ ] Scaffolding Tauri v2 App với Svelte/Vue + TailwindCSS.
-- [ ] Tauri Commands (`start_download`, `pause_download`, `get_tasks`, `save_settings`).
-- [ ] Tauri Events Streaming (`download-progress`, `speed-updated`).
-- [ ] Giao diện Home, Add Download Modal, Settings, Queue Modal.
+- [x] Scaffolding Tauri v2 App với Svelte + TailwindCSS.
+- [x] Tauri Commands (`start_download`, `cancel_download`).
+- [x] Tauri Events Streaming (`download-progress`, `download-completed`, `download-error`).
+- [x] Giao diện Home (Downloads List, Realtime speed, ETA) & Add Download Modal.
 - [ ] System Tray, OS Notifications, Autostart.
 
 ### Giai đoạn 4: Đóng Gói & Tối Ưu Hóa
