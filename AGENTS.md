@@ -1,19 +1,21 @@
 # Agent Routing Index
 
 > Agent doc file nay dau tien de biet minh co vu khi gi.
-> Chi doc SKILL.md tuong ung khi task thuc su can den skill do â€” tiet kiem token toi da.
+> Chi doc SKILL.md tuong ung khi task thuc su can den skill do — tiet kiem token toi da.
 
 ## Core Rules (Always Active)
 
-- `.agents/rules/01-core-philosophy.md` â€” Triet ly code: KISS, YAGNI, Surgical, Goal-Driven
-- `.agents/rules/02-security-baseline.md` â€” Baseline bao mat toi thieu cho moi project
+- `.agents/rules/01-core-philosophy.md` — Triet ly code: KISS, YAGNI, Surgical, Goal-Driven
+- `.agents/rules/02-security-baseline.md` — Baseline bao mat toi thieu cho moi project
+- `.agents/rules/03-migration-traceability.md` — Quy chuan chuyen dich Kotlin -> Rust & ma tran truy vet 1:1
 
 ---
 
-## Skills (Load khi can â€” On-Demand)
+## Skills (Load khi can — On-Demand)
 
 | Skill ID | Kich hoat khi... | File |
-|----------|-----------------|------|| `spec-brainstormer` | Khai thac intent, lam ro spec, phan loai Spike/Bounded/Architecture | `.agents/skills/spec-brainstormer/SKILL.md` |
+|----------|-----------------|------|
+| `spec-brainstormer` | Khai thac intent, lam ro spec, phan loai Spike/Bounded/Architecture | `.agents/skills/spec-brainstormer/SKILL.md` |
 | `subagent-orchestrator` | Dieu phoi multi-agent, chay task doc lap, continuous execution | `.agents/skills/subagent-orchestrator/SKILL.md` |
 | `systematic-debugging` | Go loi logic phuc tap, crash, memory leak theo First-Principles | `.agents/skills/systematic-debugging/SKILL.md` |
 | `unit-testing-tdd` | Viet Unit test & Integration test theo chuan TDD | `.agents/skills/unit-testing-tdd/SKILL.md` |
