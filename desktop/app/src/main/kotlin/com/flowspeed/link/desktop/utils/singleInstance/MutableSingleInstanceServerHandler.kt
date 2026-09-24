@@ -3,8 +3,6 @@ package com.flowspeed.link.desktop.utils.singleInstance
 import org.http4k.core.HttpHandler
 import org.http4k.core.Response
 import org.http4k.core.Status
-import org.http4k.routing.bind
-import org.http4k.routing.orElse
 import org.http4k.routing.routes
 
 class MutableSingleInstanceServerHandler : SingleInstanceServerHandler {
@@ -13,18 +11,15 @@ class MutableSingleInstanceServerHandler : SingleInstanceServerHandler {
     private var mainHandler = createRoutes()
 
     private fun createRoutes(): HttpHandler {
+        if (handlers.isEmpty()) {
+            return { Response(Status.NOT_FOUND) }
+        }
         val handlersArray = handlers.map { (cmd, handler) ->
             cmd bindSafe {
                 handler()
             }
         }.toTypedArray()
-        return routes(
-            *handlersArray,
-            // add this since empty routes will crash
-            orElse bind {
-                Response(Status.NOT_FOUND)
-            }
-        )
+        return routes(*handlersArray)
     }
 
     override val handler: HttpHandler

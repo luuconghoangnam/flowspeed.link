@@ -105,17 +105,13 @@ compose {
             // Define the main class for the application.
             mainClass = "$desktopPackageName.AppKt"
             jvmArgs(
-                // Use Serial GC for lowest native memory footprint
                 "-XX:+UseSerialGC",
-                "-XX:MaxHeapFreeRatio=20",
                 "-XX:MinHeapFreeRatio=5",
-                // Tight heap limits - force GC pressure to keep memory low
+                "-XX:MaxHeapFreeRatio=20",
                 "-Xms16m",
-                "-Xmx192m",
-                // Reduce metaspace and code cache
-                "-XX:MaxMetaspaceSize=96m",
-                "-XX:ReservedCodeCacheSize=48m",
-                // Reduce thread stack size (default 1MB per thread)
+                "-Xmx256m",
+                "-XX:MaxMetaspaceSize=128m",
+                "-XX:ReservedCodeCacheSize=64m",
                 "-Xss512k",
             )
             nativeDistributions {
