@@ -152,7 +152,7 @@ class HttpDownloadJobTest {
             job.resume()
             val finalStatus = job.status.first { it is DownloadJobStatus.Canceled }
             assertTrue(finalStatus is DownloadJobStatus.Canceled)
-            assertTrue((finalStatus as DownloadJobStatus.Canceled).e is TooManyErrorException)
+            assertTrue(finalStatus.e is TooManyErrorException)
         } finally {
             job.close()
         }

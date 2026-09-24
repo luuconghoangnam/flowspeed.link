@@ -5,6 +5,7 @@ import com.flowspeed.lib.downloader.db.IDownloadQueueDatabase
 import com.flowspeed.lib.downloader.db.DownloadQueuePersistedDataAccess
 import com.flowspeed.lib.downloader.db.QueueModel
 import com.flowspeed.lib.util.suspendGuardedEntry
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -238,6 +239,7 @@ private class QueueInfoPersistedData(
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 private fun QueueManager.getActiveOrInactiveQueues(
     active: Boolean,
 ): Flow<List<DownloadQueue>> {
@@ -269,6 +271,7 @@ fun QueueManager.inactiveQueuesFlow(): Flow<List<DownloadQueue>> {
     return getActiveOrInactiveQueues(false)
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 fun QueueManager.queueModelsFlow(): Flow<List<QueueModel>> {
     return queues.flatMapLatest { queues ->
         if (queues.isEmpty()) {

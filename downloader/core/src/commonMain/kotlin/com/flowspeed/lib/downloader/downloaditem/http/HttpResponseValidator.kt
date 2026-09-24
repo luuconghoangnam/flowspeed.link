@@ -59,7 +59,7 @@ class HttpResponseValidator {
             }
             if (nextServerETag != null && newServerETag != null) {
                 if (nextServerETag != newServerETag) {
-                    throw FileChangedException.ETagChangedException(nextServerETag!!, newServerETag)
+                    throw FileChangedException.ETagChangedException(nextServerETag, newServerETag)
                 }
             }
         }

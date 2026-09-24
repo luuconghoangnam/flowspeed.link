@@ -23,8 +23,8 @@ interface IDownloadQueueDatabase {
     suspend fun getAllQueues(): List<QueueModel>
     suspend fun setAllQueues(queues: List<QueueModel>)
     suspend fun deleteAllQueues()
-    suspend fun getQueue(queueId:Long):QueueModel
-    suspend fun deleteQueue(queue: Long)
+    suspend fun getQueue(queueId: Long): QueueModel
+    suspend fun deleteQueue(queueId: Long)
     suspend fun updateQueue(queue: QueueModel)
     suspend fun addQueue(queue: QueueModel)
 }
@@ -36,8 +36,8 @@ interface IDownloadQueueDatabase {
  */
 interface DownloadQueuePersistedDataAccess {
 
-    suspend fun setModel(queue: QueueModel)
-    suspend fun getModel():QueueModel
+    suspend fun setModel(model: QueueModel)
+    suspend fun getModel(): QueueModel
 
     suspend fun update(update: (QueueModel) -> QueueModel) {
         setModel(
