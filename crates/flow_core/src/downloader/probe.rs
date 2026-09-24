@@ -147,6 +147,18 @@ mod tests {
         assert!(res.is_ok());
         let meta = res.unwrap();
         assert!(meta.content_length.is_some());
-        println!("Length: {:?}, Range: {}, Filename: {:?}", meta.content_length, meta.supports_range, meta.suggested_filename);
+    }
+
+    #[tokio::test]
+    async fn test_probe_cloudflare() {
+        let client = Client::builder()
+            .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+            .unwrap();
+        let prober = UrlProber::new(client);
+        let res = prober.probe("https://speed.cloudflare.com/__down?bytes=10485760", &HashMap::new()).await;
+        println!("Cloudflare Probe result: {:?}", res);
+        assert!(res.is_ok());
     }
 }

@@ -62,8 +62,13 @@ impl HttpPartDownloader {
             req = req.header(k, v);
         }
 
-        let range_val = format!("bytes={}-{}", current_start, part.end_byte);
-        req = req.header(RANGE, range_val);
+        if part.end_byte != u64::MAX {
+            let range_val = format!("bytes={}-{}", current_start, part.end_byte);
+            req = req.header(RANGE, range_val);
+        } else if current_start > 0 {
+            let range_val = format!("bytes={}-", current_start);
+            req = req.header(RANGE, range_val);
+        }
 
         let resp = req.send().await?;
         if !resp.status().is_success() && resp.status().as_u16() != 206 {

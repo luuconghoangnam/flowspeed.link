@@ -320,4 +320,32 @@ mod tests {
         assert!(content.contains("Rust"));
         println!("File downloaded successfully! Length: {} bytes", content.len());
     }
+
+    #[tokio::test]
+    async fn test_download_cloudflare_10mb() {
+        let dir = tempdir().unwrap();
+        let target_file = dir.path().join("10MB.bin");
+        let coordinator = HttpDownloadCoordinator::new(4);
+        let canceled = Arc::new(AtomicBool::new(false));
+
+        let result = coordinator
+            .start_download(
+                "real-test-2".to_string(),
+                "https://speed.cloudflare.com/__down?bytes=10485760".to_string(),
+                HashMap::new(),
+                target_file.clone(),
+                canceled,
+                |prog| {
+                    println!("CF Progress: {}/{} bytes, speed: {} bps", prog.downloaded_bytes, prog.total_bytes.unwrap_or(0), prog.speed_bps);
+                },
+            )
+            .await;
+
+        println!("CF download result: {:?}", result);
+        assert!(result.is_ok());
+        assert!(target_file.exists());
+        let meta = std::fs::metadata(&target_file).unwrap();
+        assert_eq!(meta.len(), 10485760);
+        println!("CF 10MB File downloaded successfully! Length: {} bytes", meta.len());
+    }
 }

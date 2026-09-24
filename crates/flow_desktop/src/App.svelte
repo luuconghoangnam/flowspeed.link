@@ -178,9 +178,9 @@
 
   function setTestUrl(type: '10mb' | '100mb' | 'small') {
     if (type === '10mb') {
-      inputUrl = "https://speed.hetzner.de/10MB.bin";
+      inputUrl = "https://speed.cloudflare.com/__down?bytes=10485760";
     } else if (type === '100mb') {
-      inputUrl = "https://speed.hetzner.de/100MB.bin";
+      inputUrl = "https://speed.cloudflare.com/__down?bytes=52428800";
     } else {
       inputUrl = "https://raw.githubusercontent.com/rust-lang/rust/master/README.md";
     }
